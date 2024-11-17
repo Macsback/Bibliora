@@ -7,10 +7,10 @@ class BooksScreen extends StatefulWidget {
   const BooksScreen({super.key});
 
   @override
-  _BooksScreenState createState() => _BooksScreenState();
+  BooksScreenState createState() => BooksScreenState();
 }
 
-class _BooksScreenState extends State<BooksScreen> {
+class BooksScreenState extends State<BooksScreen> {
   List books = [];
 
   @override

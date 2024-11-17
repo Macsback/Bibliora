@@ -1,4 +1,4 @@
-import 'package:bibliora/models/bookClub.dart';
+import 'package:bibliora/models/book_club.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -7,10 +7,10 @@ class BookClubsScreen extends StatefulWidget {
   const BookClubsScreen({super.key});
 
   @override
-  _BookClubsScreenState createState() => _BookClubsScreenState();
+  BookClubsScreenState createState() => BookClubsScreenState();
 }
 
-class _BookClubsScreenState extends State<BookClubsScreen> {
+class BookClubsScreenState extends State<BookClubsScreen> {
   List<BookClub> bookClubs = [];
 
   @override

@@ -7,10 +7,10 @@ class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
 
   @override
-  _UsersScreenState createState() => _UsersScreenState();
+  UsersScreenState createState() => UsersScreenState();
 }
 
-class _UsersScreenState extends State<UsersScreen> {
+class UsersScreenState extends State<UsersScreen> {
   List<User> users = [];
 
   @override
