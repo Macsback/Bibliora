@@ -20,7 +20,8 @@ class UsersScreenState extends State<UsersScreen> {
   }
 
   _fetchUsers() async {
-    final response = await http.get(Uri.parse('http://52.87.5.217:5000/users'));
+    final response =
+        await http.get(Uri.parse('https://bibliorabackend.online/users'));
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);

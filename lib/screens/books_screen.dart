@@ -20,7 +20,8 @@ class BooksScreenState extends State<BooksScreen> {
   }
 
   _fetchBooks() async {
-    final response = await http.get(Uri.parse('http://52.87.5.217:5000/books'));
+    final response =
+        await http.get(Uri.parse('https://bibliorabackend.online/books'));
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = json.decode(response.body);
