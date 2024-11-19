@@ -1,19 +1,14 @@
 class BookClub {
-  final int id;
   final String name;
   final String description;
 
-  BookClub({
-    required this.id,
-    required this.name,
-    required this.description,
-  });
+  BookClub({required this.name, required this.description});
 
   factory BookClub.fromJson(Map<String, dynamic> json) {
     return BookClub(
-      id: json['BookClubID'],
-      name: json['Name'],
-      description: json['Description'],
+      name: json['Name'] as String? ?? 'Untitled Club',
+      description:
+          json['Description'] as String? ?? 'No description available.',
     );
   }
 }

@@ -1,76 +1,127 @@
-import 'package:bibliora/screens/bookclubs_screen.dart';
-import 'package:bibliora/screens/books_screen.dart';
-import 'package:bibliora/screens/users_screen.dart';
+import 'footer_section.dart';
+import 'arrivals_section.dart';
+import 'banner_section.dart';
+import 'bookclubs_section.dart';
+import 'about_section.dart';
+import 'featured_books_section.dart';
+import 'service_section.dart';
+import 'reviews_section.dart';
 import 'package:flutter/material.dart';
+import 'main_section.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+// HomePage
+class _HomeScreenState extends State<HomeScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF1F2020),
+      //Navigation Bar
       appBar: AppBar(
-        title: const Text('Welcome to Bibliora'),
         centerTitle: true,
-      ),
-      body: Center(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                'Welcome to Bibliora!',
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                ),
+        toolbarHeight: 80,
+        flexibleSpace: Container(
+          height: 80,
+          decoration: BoxDecoration(
+            boxShadow: [
+              // Bottom shadow
+              BoxShadow(
+                color: Color(0x80089DA1),
+                blurRadius: 3,
+                spreadRadius: 0,
+                offset: Offset(0, 3),
               ),
-              SizedBox(height: 20),
-              Text(
-                'Your portal for books, book clubs, and users.',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.grey[600],
-                ),
-                textAlign: TextAlign.center,
+              // No shadow on the left
+              BoxShadow(
+                color: Color(0xFF1F2020),
+                offset: Offset(-5, 0),
+                blurRadius: 0,
+                spreadRadius: 0,
               ),
-              SizedBox(height: 40),
-              // Navigation buttons
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => BooksScreen()),
-                  );
-                },
-                child: Text('Go to Books'),
+              // No shadow on the right
+              BoxShadow(
+                color: Color(0xFF1F2020),
+                offset: Offset(5, 0),
+                blurRadius: 0,
+                spreadRadius: 0,
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => BookClubsScreen()),
-                  );
-                },
-                child: Text('Go to Book Clubs'),
+            ],
+          ),
+          //Navigation Elements
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              // Logo
+              Image.asset('assets/logo.png', height: 50),
+              Row(
+                children: [
+                  navLink('Home'),
+                  navLink('About'),
+                  navLink('Reading Lists'),
+                  navLink('Arrivals'),
+                  navLink('Reviews'),
+                  navLink('Book Clubs'),
+                ],
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => UsersScreen()),
-                  );
-                },
-                child: Text('Go to Users'),
+              //Icons
+              Row(
+                children: [
+                  Icon(
+                    Icons.search,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 10),
+                  Icon(
+                    Icons.favorite,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 10),
+                  Icon(
+                    Icons.person,
+                    color: Colors.white,
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            MainSection(),
+            ServicesSection(),
+            AboutSection(),
+            FeaturedBooksSection(),
+            ArrivalSection(),
+            ReviewsSection(),
+            BannerSection(),
+            BookClubsSection(),
+            FooterSection(),
+          ],
+        ),
+      ),
     );
   }
+}
+
+// Navigation link logic
+Widget navLink(String title) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    child: TextButton(
+      onPressed: () {},
+      child: Text(
+        title,
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+    ),
+  );
 }
