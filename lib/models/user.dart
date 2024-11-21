@@ -1,16 +1,22 @@
 class User {
-  final int id;
-  final String email;
+  final int userId;
   final String username;
+  final String email;
+  final String memberSince;
 
   User({
-    required this.id,
-    required this.email,
+    required this.userId,
     required this.username,
+    required this.email,
+    required this.memberSince,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-        id: json['UserID'], email: json['Email'], username: json['Username']);
+      userId: json['UserID'],
+      username: json['Username'],
+      email: json['Email'],
+      memberSince: json['MemberSince'],
+    );
   }
 }

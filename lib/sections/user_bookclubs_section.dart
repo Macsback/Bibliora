@@ -1,64 +1,51 @@
-import 'dart:convert';
-import 'package:bibliora/models/book_club.dart';
+import 'package:bibliora/models/bookclubs.dart';
+import 'package:bibliora/service/api_service.dart';
+import 'package:bibliora/service/user_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
-class BookClubsSection extends StatefulWidget {
-  const BookClubsSection({super.key});
+class UserBookClubsSection extends StatefulWidget {
+  const UserBookClubsSection({super.key});
 
   @override
-  BookClubsSectionState createState() => BookClubsSectionState();
+  UserBookClubsSectionState createState() => UserBookClubsSectionState();
 }
 
-class BookClubsSectionState extends State<BookClubsSection> {
-  List<BookClub> bookClubs = [];
-  bool isLoading = true;
-  String errorMessage = '';
-
-  Future<void> _fetchBookClubs() async {
-    try {
-      final response =
-          await http.get(Uri.parse('https://bibliorabackend.online/bookclubs'));
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-
-        if (data['bookclubs'] != null && data['bookclubs'] is List) {
-          setState(() {
-            bookClubs = (data['bookclubs'] as List)
-                .map((bookJson) => BookClub.fromJson(bookJson))
-                .toList();
-          });
-        } else {
-          throw Exception('No book clubs found');
-        }
-      } else {
-        throw Exception('Failed to load book clubs');
-      }
-    } catch (e) {
-      print('Error fetching book clubs: $e');
-      setState(() {
-        bookClubs = [];
-      });
-    }
-  }
+class UserBookClubsSectionState extends State<UserBookClubsSection> {
+  List<BookClub> userBookClubs = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchBookClubs();
+    // No need to load the clubs here directly, since userID will be handled in the build method.
+    loadUserBookClubs();
+  }
+
+  Future<void> loadUserBookClubs() async {
+    try {
+      final userID = Provider.of<UserProvider>(context, listen: false).userID;
+
+      List<BookClub> fetchedUserBookClubs =
+          await ApiService.fetchUserBookClubs(userID);
+      setState(() {
+        userBookClubs = fetchedUserBookClubs;
+      });
+    } catch (e) {
+      print('Error loading book clubs: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final imageNames = ['blog_1.jpg', 'blog_2.jpg', 'blog_3.jpg'];
+
     return Container(
       padding: EdgeInsets.all(20),
       child: Column(
         children: [
           Center(
             child: Text(
-              'Book Clubs',
+              'Your Book Clubs',
               style: TextStyle(
                 fontSize: 50,
                 fontWeight: FontWeight.bold,
@@ -68,7 +55,7 @@ class BookClubsSectionState extends State<BookClubsSection> {
             ),
           ),
           SizedBox(height: 20),
-          if (bookClubs.isEmpty)
+          if (userBookClubs.isEmpty)
             Center(
               child: Text(
                 'No book clubs available.',
@@ -80,12 +67,12 @@ class BookClubsSectionState extends State<BookClubsSection> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: bookClubs.asMap().entries.map((entry) {
+                children: userBookClubs.asMap().entries.map((entry) {
                   final index = entry.key;
                   final club = entry.value;
 
                   return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
                       width: 400,
                       height: 400,
@@ -122,7 +109,7 @@ class BookClubsSectionState extends State<BookClubsSection> {
                           SizedBox(height: 15),
                           // BookClub Name
                           Text(
-                            club.name,
+                            club.bookClubName ?? 'Unknown Name',
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -132,9 +119,9 @@ class BookClubsSectionState extends State<BookClubsSection> {
                           SizedBox(height: 10),
                           // BookClub Description
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            padding: EdgeInsets.symmetric(horizontal: 20),
                             child: Text(
-                              club.description,
+                              club.description ?? 'Unknown Description',
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,

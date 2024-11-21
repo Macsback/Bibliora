@@ -1,7 +1,10 @@
 // Welcome Banner
+import 'package:bibliora/screens/add_book_screen.dart';
 import 'package:flutter/material.dart';
 
-class MainSection extends StatelessWidget {
+class WelcomeSection extends StatelessWidget {
+  const WelcomeSection({super.key});
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -68,7 +71,12 @@ class MainSection extends StatelessWidget {
                     ),
                     SizedBox(height: 50),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AddBookScreen()));
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF089DA1),
                         padding:

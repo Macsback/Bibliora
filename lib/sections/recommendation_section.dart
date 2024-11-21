@@ -1,54 +1,39 @@
+import 'package:bibliora/service/api_service.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:bibliora/models/book.dart';
 
-class ArrivalSection extends StatefulWidget {
-  const ArrivalSection({super.key});
+class RecommendationSection extends StatefulWidget {
+  const RecommendationSection({super.key});
 
   @override
-  ArrivalSectionState createState() => ArrivalSectionState();
+  RecommendationSectionState createState() => RecommendationSectionState();
 }
 
-class ArrivalSectionState extends State<ArrivalSection> {
+class RecommendationSectionState extends State<RecommendationSection> {
   List<Book> books = [];
   List<double> bookRatings = [4.5, 3.0, 5.0, 4.0, 4.5, 3.5, 4.0, 4.5, 5.0, 3.5];
 
   @override
   void initState() {
     super.initState();
-    _fetchBooks();
+    loadBooks();
   }
 
-  _fetchBooks() async {
+  Future<void> loadBooks() async {
     try {
-      final response =
-          await http.get(Uri.parse('https://bibliorabackend.online/books'));
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-
-        if (data['books'] != null && data['books'] is List) {
-          setState(() {
-            books = (data['books'] as List)
-                .map((bookJson) => Book.fromJson(bookJson))
-                .toList();
-          });
-        } else {
-          throw Exception('No books found');
-        }
-      } else {
-        throw Exception('Failed to load books');
-      }
+      List<Book> fetchedBooks = await ApiService.fetchBooks();
+      setState(() {
+        books = fetchedBooks;
+      });
     } catch (e) {
-      print('Error fetching books: $e');
+      print('Error loading books: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -77,9 +62,9 @@ class ArrivalSectionState extends State<ArrivalSection> {
                   'assets/${(book.title ?? '').replaceAll(RegExp(r'\s+'), '_').toLowerCase()}.jpg';
               double rating = bookRatings[index];
               return Padding(
-                padding: const EdgeInsets.only(right: 30, left: 20),
+                padding: EdgeInsets.only(right: 30, left: 20),
                 child: LayoutBuilder(
-                  builder: (context, constraints) {
+                  builder: (context, raints) {
                     return Container(
                       decoration: BoxDecoration(
                         color: Color(0xFF1F2020),
@@ -96,7 +81,7 @@ class ArrivalSectionState extends State<ArrivalSection> {
                           width: 2,
                         ),
                       ),
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.all(20),
                       child: Column(
                         children: [
                           Image.asset(
@@ -104,7 +89,7 @@ class ArrivalSectionState extends State<ArrivalSection> {
                             height: 200,
                             fit: BoxFit.contain,
                           ),
-                          const SizedBox(height: 10),
+                          SizedBox(height: 10),
                           Text(
                             book.title ?? 'Unknown Title',
                             style: TextStyle(
@@ -116,7 +101,7 @@ class ArrivalSectionState extends State<ArrivalSection> {
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 5),
+                          SizedBox(height: 5),
                           Text(
                             book.author ?? 'Unknown Author',
                             style: TextStyle(
@@ -127,7 +112,7 @@ class ArrivalSectionState extends State<ArrivalSection> {
                             overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 5),
+                          SizedBox(height: 5),
                           for (var genre in (book.genres ?? []).take(3))
                             Text(
                               genre,

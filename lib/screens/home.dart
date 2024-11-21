@@ -1,13 +1,15 @@
-import 'footer_section.dart';
-import 'arrivals_section.dart';
-import 'banner_section.dart';
-import 'bookclubs_section.dart';
-import 'about_section.dart';
-import 'featured_books_section.dart';
-import 'service_section.dart';
-import 'reviews_section.dart';
+import 'package:bibliora/screens/profile_screen.dart';
+
+import '../sections/footer_section.dart';
+import '../sections/recommendation_section.dart';
+import '../sections/banner_section.dart';
+import '../sections/bookclubs_section.dart';
+import '../sections/about_section.dart';
+import '../sections/reading_list_section.dart';
+import '../sections/service_section.dart';
+import '../sections/reviews_section.dart';
 import 'package:flutter/material.dart';
-import 'main_section.dart';
+import '../sections/welcome_section.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -82,9 +84,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.white,
                   ),
                   SizedBox(width: 10),
-                  Icon(
-                    Icons.person,
+                  IconButton(
+                    icon: Icon(Icons.person),
                     color: Colors.white,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ProfileScreen()),
+                    ),
                   ),
                 ],
               ),
@@ -96,14 +102,14 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            MainSection(),
+            WelcomeSection(),
             ServicesSection(),
-            AboutSection(),
-            FeaturedBooksSection(),
-            ArrivalSection(),
+            ReadingListSection(),
             ReviewsSection(),
+            RecommendationSection(),
             BannerSection(),
             BookClubsSection(),
+            AboutSection(),
             FooterSection(),
           ],
         ),
@@ -115,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
 // Navigation link logic
 Widget navLink(String title) {
   return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    padding: EdgeInsets.symmetric(horizontal: 8.0),
     child: TextButton(
       onPressed: () {},
       child: Text(

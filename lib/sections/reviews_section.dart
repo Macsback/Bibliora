@@ -56,7 +56,7 @@ class ReviewsSection extends StatelessWidget {
             children: reviews.map((review) {
               return Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(12),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Color(0xFF1F2020),
@@ -73,7 +73,7 @@ class ReviewsSection extends StatelessWidget {
                         width: 2,
                       ),
                     ),
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
