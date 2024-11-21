@@ -82,55 +82,58 @@ class RecommendationSectionState extends State<RecommendationSection> {
                         ),
                       ),
                       padding: EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          Image.asset(
-                            imageAsset,
-                            height: 200,
-                            fit: BoxFit.contain,
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            book.title ?? 'Unknown Title',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              imageAsset,
+                              height: 200,
+                              fit: BoxFit.contain,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            book.author ?? 'Unknown Author',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 5),
-                          for (var genre in (book.genres ?? []).take(3))
+                            SizedBox(height: 10),
                             Text(
-                              genre,
+                              book.title ?? 'Unknown Title',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                                 color: Colors.white,
                               ),
-                              textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
                             ),
-                          SizedBox(height: 10),
-                          // Star ratings
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: generateStars(rating),
-                          ),
-                        ],
+                            SizedBox(height: 5),
+                            Text(
+                              book.author ?? 'Unknown Author',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
+                            SizedBox(height: 5),
+                            for (var genre in (book.genres ?? []).take(3))
+                              Text(
+                                genre,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            SizedBox(height: 10),
+                            // Star ratings
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: generateStars(rating),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },

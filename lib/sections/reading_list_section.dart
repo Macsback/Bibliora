@@ -1,4 +1,5 @@
 import 'package:bibliora/models/book.dart';
+import 'package:bibliora/screens/add_book_screen.dart';
 import 'package:bibliora/service/user_provider.dart';
 import 'package:flutter/material.dart';
 import '../service/api_service.dart';
@@ -61,11 +62,46 @@ class ReadingListSectionState extends State<ReadingListSection> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'Your Reading List',
+                'Your Book Lists',
                 style: TextStyle(
                     fontSize: 45,
                     fontWeight: FontWeight.w900,
                     color: Colors.white),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Currently Reading',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => AddBookScreen()));
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF089DA1),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      textStyle: TextStyle(fontSize: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      '+ Add Books',
+                      style: TextStyle(
+                        color: Colors.white, // Text color is white
+                      ),
+                    ),
+                  )
+                ],
               ),
               SizedBox(height: 20),
               SingleChildScrollView(
