@@ -61,7 +61,6 @@ class AddBookScreenState extends State<AddBookScreen> {
         final String isbn = _isbnController.text.trim();
         final String format = selectedFormat;
 
-        // Fix: Use listen: false to avoid unnecessary rebuild
         int userId = Provider.of<UserProvider>(context, listen: false).userID;
 
         ApiService().addBook(
@@ -119,7 +118,6 @@ class AddBookScreenState extends State<AddBookScreen> {
           style: TextStyle(color: Colors.white),
         ),
         actions: [
-          // Refresh Button
           IconButton(
             icon: Icon(Icons.refresh),
             onPressed: _refreshReadingList,
@@ -171,7 +169,6 @@ class AddBookScreenState extends State<AddBookScreen> {
                           style: TextStyle(color: Colors.red),
                         ),
                       SizedBox(height: 16),
-
                       // Author
                       TextField(
                         controller: _authorController,
@@ -194,7 +191,6 @@ class AddBookScreenState extends State<AddBookScreen> {
                           style: TextStyle(color: Colors.red),
                         ),
                       SizedBox(height: 16),
-
                       // Genre
                       TextField(
                         controller: _genreController,
@@ -217,7 +213,6 @@ class AddBookScreenState extends State<AddBookScreen> {
                           style: TextStyle(color: Colors.red),
                         ),
                       SizedBox(height: 16),
-
                       // ISBN
                       TextField(
                         controller: _isbnController,
@@ -245,7 +240,6 @@ class AddBookScreenState extends State<AddBookScreen> {
                           style: TextStyle(color: Colors.red),
                         ),
                       SizedBox(height: 16),
-
                       // Format
                       SizedBox(
                         height: 56,
@@ -323,7 +317,6 @@ class AddBookScreenState extends State<AddBookScreen> {
                         ),
                       ),
                       SizedBox(height: 16),
-
                       // Add Book Button
                       ElevatedButton(
                         onPressed: _addBook,

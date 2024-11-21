@@ -28,11 +28,10 @@ class ReadingListSectionState extends State<ReadingListSection> {
   Future<void> loadUserBooks(int userId) async {
     try {
       if (!booksLoaded) {
-        // Load books only if not already loaded
         List<Book> fetchedBooks = await ApiService.fetchUserBooks(userId);
         setState(() {
           userBooks = fetchedBooks;
-          booksLoaded = true; // Mark as loaded
+          booksLoaded = true;
         });
       }
     } catch (e) {
@@ -40,7 +39,6 @@ class ReadingListSectionState extends State<ReadingListSection> {
     }
   }
 
-  // This method will be used to refresh the reading list from the parent
   void refreshReadingList() {
     final userId = Provider.of<UserProvider>(context, listen: false).userID;
     setState(() {
@@ -97,7 +95,7 @@ class ReadingListSectionState extends State<ReadingListSection> {
                     child: Text(
                       '+ Add Books',
                       style: TextStyle(
-                        color: Colors.white, // Text color is white
+                        color: Colors.white,
                       ),
                     ),
                   )
@@ -157,7 +155,7 @@ class ReadingListSectionState extends State<ReadingListSection> {
                               book.author ?? 'Unknown Author',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 14, // Smaller author text
+                                fontSize: 14,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,

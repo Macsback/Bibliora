@@ -167,7 +167,6 @@ class FooterSection extends StatelessWidget {
             ],
           ),
           SizedBox(height: 20),
-          // Copyright Text
           Text(
             '© 2024 Bibliora. All rights reserved.',
             textAlign: TextAlign.center,

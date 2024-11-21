@@ -127,7 +127,6 @@ class RecommendationSectionState extends State<RecommendationSection> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             SizedBox(height: 10),
-                            // Star ratings
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: generateStars(rating),

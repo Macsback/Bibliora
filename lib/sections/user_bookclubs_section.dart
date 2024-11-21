@@ -17,7 +17,6 @@ class UserBookClubsSectionState extends State<UserBookClubsSection> {
   @override
   void initState() {
     super.initState();
-    // No need to load the clubs here directly, since userID will be handled in the build method.
     loadUserBookClubs();
   }
 

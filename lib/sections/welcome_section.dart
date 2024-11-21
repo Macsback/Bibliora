@@ -1,4 +1,3 @@
-// Welcome Banner
 import 'package:bibliora/screens/add_book_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +16,6 @@ class WelcomeSection extends StatelessWidget {
       height: screenHeight * 0.95,
       child: Stack(
         children: [
-          // Watermark background image
           Positioned(
             height: screenHeight * 0.85,
             width: screenWidth,
@@ -83,13 +81,13 @@ class WelcomeSection extends StatelessWidget {
                             EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                         textStyle: TextStyle(fontSize: 18),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.zero, // No rounded corners
+                          borderRadius: BorderRadius.zero,
                         ),
                       ),
                       child: Text(
                         'Start Adding Books',
                         style: TextStyle(
-                          color: Colors.white, // Text color is white
+                          color: Colors.white,
                         ),
                       ),
                     )
