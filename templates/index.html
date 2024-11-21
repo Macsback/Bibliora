@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="index-container">
+        <h1>Welcome to Bibliora!</h1>
+        <p>Select a route:</p>
+        <ul class="navigation-list">
+            <li><a href="{{ url_for('get_user') }}" class="button">Get Users</a></li>
+            <li><a href="{{ url_for('get_books') }}" class="button">Get Books</a></li>
+            <li><a href="{{ url_for('get_bookclubs') }}" class="button">Get Book Clubs</a></li>
+            <li><a href="{{ url_for('get_books', user_id=1) }}" class="button">User's Books</a></li>
+            <li><a href="{{ url_for('get_bookclubs', user_id=1) }}" class="button">User's Book Clubs</a></li>
+        </ul>
+    </div>
+</body>
+
+</html>

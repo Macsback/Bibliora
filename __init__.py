@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 import mysql.connector
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from mysql.connector import Error
 from flask_cors import CORS
 
@@ -39,7 +39,7 @@ def get_db_connection():
 
 @app.route("/")
 def index():
-    return "This is bibliora's backend."
+    return render_template("index.html")
 
 
 @app.route("/users", methods=["GET"])
