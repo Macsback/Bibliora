@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:bibliora/service/config_manager.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/http.dart' as https;
 import 'package:bibliora/models/book.dart';
 import 'package:bibliora/service/api_service.dart';
 import 'package:bibliora/service/user_provider.dart';
@@ -50,7 +50,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
     subscription.messages.listen((message) {
       print('Received message: ${message.content}');
       setState(() {
-        status = message.content.toString();
+        status = "Your Book was found. Congratulations!";
       });
     });
   }
@@ -88,12 +88,11 @@ class LocateBookScreenState extends State<LocateBookScreen> {
     String backendUrl = ConfigManager.getConfigValue('BACKEND_URL') ?? '';
 
     try {
-      final response = await http.post(
+      final response = await https.post(
         Uri.parse('$backendUrl/trigger'),
         headers: {'Content-Type': 'application/json'},
       );
 
-      print('Response status code: ${response.statusCode}');
       print('Response body: ${response.body}');
 
       // Check if the response body is empty
@@ -108,7 +107,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
 
       if (data['message'] == 'Success') {
         setState(() {
-          status = "Your Book was found. Congratulations!";
+          print('Response status code: ${response.statusCode}');
         });
       } else {
         setState(() {
