@@ -1,3 +1,4 @@
+import 'package:bibliora/screens/book_locate_screen.dart';
 import 'package:bibliora/screens/profile_screen.dart';
 
 import '../sections/footer_section.dart';
@@ -82,6 +83,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   Icon(
                     Icons.favorite,
                     color: Colors.white,
+                  ),
+                  SizedBox(width: 10),
+                  IconButton(
+                    icon: Icon(Icons.location_on),
+                    color: Colors.white,
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => BookLocateScreen()),
+                    ),
                   ),
                   SizedBox(width: 10),
                   IconButton(
