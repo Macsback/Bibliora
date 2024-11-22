@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bibliora/service/config_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:bibliora/models/book.dart';
 import 'package:bibliora/service/api_service.dart';
@@ -8,14 +9,14 @@ import 'package:provider/provider.dart';
 import 'package:dropdown_search/dropdown_search.dart';
 import 'package:pubnub/pubnub.dart';
 
-class BookLocateScreen extends StatefulWidget {
-  const BookLocateScreen({super.key});
+class LocateBookScreen extends StatefulWidget {
+  const LocateBookScreen({super.key});
 
   @override
-  BookLocateScreenState createState() => BookLocateScreenState();
+  LocateBookScreenState createState() => LocateBookScreenState();
 }
 
-class BookLocateScreenState extends State<BookLocateScreen> {
+class LocateBookScreenState extends State<LocateBookScreen> {
   late List<Book> books;
   late List<String> filteredBooks;
 
@@ -25,7 +26,7 @@ class BookLocateScreenState extends State<BookLocateScreen> {
   late PubNub pubnub;
   late Subscription subscription;
 
-  // Fetch books from API when the screen is loaded
+  // Fetch books from Backend
   @override
   void initState() {
     super.initState();
@@ -35,14 +36,15 @@ class BookLocateScreenState extends State<BookLocateScreen> {
     // Initialize PubNub
     pubnub = PubNub(
       defaultKeyset: Keyset(
-        subscribeKey: 'sub-c-34d6a548-9d5c-4a5d-8cc9-8981aa287ee1',
-        publishKey: 'pub-c-f4ca383b-ff3c-4834-b8b8-6068d4e02020',
-        userId: const UserId('flutter-client'),
+        subscribeKey: ConfigManager.getConfigValue('PUBNUB_SUBSCRIBE_KEY'),
+        publishKey: ConfigManager.getConfigValue('PUBNUB_PUBLISH_KEY'),
+        userId: UserId(ConfigManager.getConfigValue('PUBNUB_USER_ID')),
       ),
     );
 
     // Subscribe to the channel
-    subscription = pubnub.subscribe(channels: {'device_control_channel'});
+    subscription = pubnub
+        .subscribe(channels: {ConfigManager.getConfigValue('PUBNUB_CHANNEL')});
 
     // Listen for messages
     subscription.messages.listen((message) {
@@ -67,7 +69,7 @@ class BookLocateScreenState extends State<BookLocateScreen> {
     }
   }
 
-  // Function to filter books based on the search input
+  // Function to filter books
   void filterBooks(String query) {
     List<String> results = books
         .where((book) =>
@@ -83,17 +85,30 @@ class BookLocateScreenState extends State<BookLocateScreen> {
 
   // Function to trigger the action and send PubNub message
   Future<void> triggerAction() async {
+    String backendUrl = ConfigManager.getConfigValue('BACKEND_URL') ?? '';
+
     try {
       final response = await http.post(
-        Uri.parse('http://52.87.5.217:5000/trigger'),
+        Uri.parse('$backendUrl/trigger'),
         headers: {'Content-Type': 'application/json'},
       );
+
+      print('Response status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      // Check if the response body is empty
+      if (response.body.isEmpty) {
+        setState(() {
+          status = "Received empty response from server!";
+        });
+        return;
+      }
 
       final data = jsonDecode(response.body);
 
       if (data['message'] == 'Success') {
         setState(() {
-          status = "LED and Buzzer Triggered!";
+          status = "Your Book was found. Congratulations!";
         });
       } else {
         setState(() {
@@ -292,6 +307,13 @@ class BookLocateScreenState extends State<BookLocateScreen> {
                 ),
               ),
             ),
+            SizedBox(
+              height: 40,
+            ),
+            Text(
+              status,
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            )
           ],
         ),
       ),

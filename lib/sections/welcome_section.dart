@@ -31,7 +31,7 @@ class WelcomeSection extends StatelessWidget {
             ),
           ),
 
-          // Main content (Text and Image)
+          // Main content
           Row(
             children: [
               Expanded(

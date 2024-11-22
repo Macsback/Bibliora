@@ -1,4 +1,4 @@
-import 'package:bibliora/screens/book_locate_screen.dart';
+import 'package:bibliora/screens/locate_book_screeen.dart';
 import 'package:bibliora/screens/profile_screen.dart';
 
 import '../sections/footer_section.dart';
@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          //Navigation Elements
+          // Navigation Elements
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   navLink('Book Clubs'),
                 ],
               ),
-              //Icons
+              // Icons
               Row(
                 children: [
                   Icon(
@@ -91,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => BookLocateScreen()),
+                          builder: (context) => LocateBookScreen()),
                     ),
                   ),
                   SizedBox(width: 10),
