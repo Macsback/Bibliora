@@ -4,6 +4,11 @@ import mysql.connector
 from flask import Flask, jsonify, request, render_template
 from mysql.connector import Error
 from flask_cors import CORS
+import time
+import uuid
+from pubnub.pubnub import PubNub
+from pubnub.pnconfiguration import PNConfiguration
+
 
 load_dotenv()
 
@@ -11,6 +16,64 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
 CORS(app)
+
+LED_pin = 12
+Buzzer_pin = 11
+
+pnconfig = PNConfiguration()
+pnconfig.subscribe_key = os.getenv("PUBNUB_SUBSCRIBE_KEY")
+pnconfig.publish_key = os.getenv("PUBNUB_PUBLISH_KEY")
+generated_uuid = str(uuid.uuid4())
+pnconfig.uuid = generated_uuid
+
+pubnub = PubNub(pnconfig)
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+@app.route("/trigger", methods=["POST"])
+def trigger_method():
+    try:
+        print("Scan Successful")
+        simulate_led_on_off()
+        simulate_beep()
+        response = {
+            "message": "Success",  # This message will be sent back to the frontend
+            "status": "LED and Buzzer Triggered!",
+        }
+        pubnub.publish().channel("device_control_channel").message(response).sync()
+
+        return jsonify(message="Success")
+    except Exception as e:
+        return jsonify(message=f"Error: {str(e)}")
+
+
+def simulate_led_on_off():
+    # Simulate the LED turning on and off
+    print(f"LED (Pin {LED_pin}) turned ON")
+    time.sleep(0.5)
+    print(f"LED (Pin {LED_pin}) turned OFF")
+
+
+def simulate_beep():
+    # Simulate the beep sound by printing to console
+    print(f"Buzzer (Pin {Buzzer_pin}) beeped")
+
+
+def send_pubnub_message(message):
+    """Send a message to the PubNub channel."""
+    try:
+        pubnub.publish(
+            channel=CHANNEL,
+            message=message,
+            callback=pubnub_callback,
+            error=pubnub_error,
+        )
+    except Exception as e:
+        print(f"Error sending PubNub message: {str(e)}")
 
 
 def get_db_connection():
@@ -35,11 +98,6 @@ def get_db_connection():
     except mysql.connector.Error as err:
         print(f"Database connection error: {err}")
         return None
-
-
-@app.route("/")
-def index():
-    return render_template("index.html")
 
 
 @app.route("/users", methods=["GET"])
