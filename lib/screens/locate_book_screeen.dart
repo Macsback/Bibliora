@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bibliora/models/search_dropdown.dart';
 import 'package:bibliora/service/config_manager.dart';
 import 'package:http/http.dart' as https;
 import 'package:bibliora/models/book.dart';
@@ -6,7 +7,6 @@ import 'package:bibliora/service/api_service.dart';
 import 'package:bibliora/service/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:dropdown_search/dropdown_search.dart';
 import 'package:pubnub/pubnub.dart';
 
 class LocateBookScreen extends StatefulWidget {
@@ -17,8 +17,8 @@ class LocateBookScreen extends StatefulWidget {
 }
 
 class LocateBookScreenState extends State<LocateBookScreen> {
-  late List<Book> books;
-  late List<String> filteredBooks;
+  List<Book> books = [];
+  List<String> filteredBooks = [];
 
   TextEditingController searchController = TextEditingController();
 
@@ -31,7 +31,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
   void initState() {
     super.initState();
     final userId = Provider.of<UserProvider>(context, listen: false).userID;
-    _fetchUserBooks(userId);
+    fetchUserBooks(userId);
 
     // Initialize PubNub
     pubnub = PubNub(
@@ -56,7 +56,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
   }
 
   // Function to fetch books
-  Future<void> _fetchUserBooks(int userId) async {
+  Future<void> fetchUserBooks(int userId) async {
     try {
       List<Book> fetchedBooks = await ApiService.fetchUserBooks(userId);
       setState(() {
@@ -192,100 +192,17 @@ class LocateBookScreenState extends State<LocateBookScreen> {
             // DropdownSearch to search for user books
             SizedBox(
               width: 350,
-              child: DropdownSearch<String>(
-                dropdownBuilder: (context, selectedItem) {
-                  return Text(
-                    selectedItem ?? "",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                    textAlign: TextAlign.center,
-                  );
-                },
-
-                items: (filter, infiniteScrollProps) {
+              child: SearchDropdown(
+                filterItems: (filter) {
                   filterBooks(filter);
                   return filteredBooks;
                 },
-                filterFn: (item, search) {
-                  return item.toLowerCase().contains(search.toLowerCase());
+                fillColor: const Color(0xFFD76004),
+                onItemSelected: (selectedValue) {
+                  setState(() {
+                    selectedValue = selectedValue;
+                  });
                 },
-                suffixProps: DropdownSuffixProps(
-                  dropdownButtonProps: DropdownButtonProps(
-                    iconClosed: Icon(Icons.keyboard_arrow_down),
-                    color: Colors.white,
-                    iconOpened: Icon(
-                      Icons.keyboard_arrow_up,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                decoratorProps: DropDownDecoratorProps(
-                  textAlign: TextAlign.center,
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.symmetric(vertical: 20),
-                    filled: true,
-                    fillColor: Color(0xFFD76004),
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.transparent),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.transparent),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: Colors.transparent),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    hintText: 'Search for a book...',
-                    hintStyle: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-                // Book Items
-                popupProps: PopupProps.menu(
-                  searchDelay: Duration(microseconds: 200),
-                  showSearchBox: true,
-                  searchFieldProps: TextFieldProps(
-                    decoration: InputDecoration(
-                      hintText: 'Search books...',
-                      hintStyle: TextStyle(fontSize: 18, color: Colors.white),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: Colors.transparent),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: Colors.transparent),
-                      ),
-                      contentPadding: EdgeInsets.all(12),
-                      filled: true,
-                      fillColor: Colors.white24,
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Colors.black,
-                      ),
-                    ),
-                    cursorColor: Colors.white24,
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  itemBuilder: (context, item, isDisabled, isSelected) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      child: Text(
-                        item,
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  },
-                  constraints: BoxConstraints(maxHeight: 250),
-                  menuProps: MenuProps(
-                    backgroundColor: Color(0xFF4c4d4d),
-                    margin: EdgeInsets.only(top: 12),
-                    shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12))),
-                  ),
-                  scrollbarProps: ScrollbarProps(trackVisibility: true),
-                ),
               ),
             ),
             SizedBox(height: 40),

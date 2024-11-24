@@ -1,9 +1,10 @@
+import 'package:bibliora/models/book.dart';
+import 'package:bibliora/models/search_dropdown.dart';
 import 'package:bibliora/sections/reading_list_section.dart';
 import 'package:bibliora/service/api_service.dart';
 import 'package:bibliora/service/user_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 class AddBookScreen extends StatefulWidget {
   const AddBookScreen({super.key});
@@ -13,91 +14,147 @@ class AddBookScreen extends StatefulWidget {
 }
 
 class AddBookScreenState extends State<AddBookScreen> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _authorController = TextEditingController();
-  final TextEditingController _genreController = TextEditingController();
-  final TextEditingController _isbnController = TextEditingController();
+  String? selectedISBN;
+  String? selectedTitle;
+  String? selectedAuthor;
+  String? selectedGenre;
+
+  List<Book> books = [];
+  List<String> filteredTitles = [];
+  List<String> filteredAuthors = [];
+  List<String> filteredGenres = [];
+  List<String> filteredISBN = [];
 
   String selectedFormat = "physical";
 
-  String? _titleError;
-  String? _authorError;
-  String? _genreError;
-  String? _isbnError;
-
   final GlobalKey<ReadingListSectionState> _readingListKey = GlobalKey();
 
-  bool _validateInputs() {
-    bool isValid = true;
-
-    setState(() {
-      _titleError = _titleController.text.isEmpty ? 'Title is required' : null;
-      _authorError =
-          _authorController.text.isEmpty ? 'Author is required' : null;
-      _genreError = _genreController.text.isEmpty ? 'Genre is required' : null;
-      _isbnError = _isbnController.text.isEmpty ? 'ISBN is required' : null;
-    });
-
-    // Check if ISBN contains exactly 13 digits
-    String isbn = _isbnController.text.trim();
-    if (isbn.isNotEmpty) {
-      if (isbn.length != 13) {
-        setState(() {
-          _isbnError = 'ISBN must be exactly 13 digits';
-        });
-        isValid = false;
-      }
-    }
-
-    return isValid;
+  @override
+  void initState() {
+    super.initState();
+    fetchBooks();
   }
 
-  void _addBook() async {
-    try {
-      if (_validateInputs()) {
-        final String title = _titleController.text.trim();
-        final String author = _authorController.text.trim();
-        final String genre = _genreController.text.trim();
-        final String isbn = _isbnController.text.trim();
-        final String format = selectedFormat;
+  // Filter ISBN
+  void filterISBN(String query) {
+    List<String> results = books
+        .where((book) => (book.isbn?.contains(query) ?? false))
+        .map((book) => book.isbn ?? '')
+        .toList();
+    setState(() {
+      filteredISBN = results;
+    });
+  }
 
+  // Fetch book ISBN
+  Future<void> fetchBooks() async {
+    try {
+      List<Book> fetchedBooks = await ApiService.fetchBooks();
+      setState(() {
+        books = fetchedBooks;
+        filteredTitles = books.map((book) => book.title!).toList();
+        filteredAuthors = books.map((book) => book.author!).toList();
+        filteredGenres = books
+            .expand((book) => book.genres ?? [])
+            .toSet()
+            .toList()
+            .cast<String>();
+        filteredISBN = books.map((book) => book.isbn!).toList();
+      });
+    } catch (e) {
+      print('Error fetching books: $e');
+    }
+  }
+
+  // Filter Author
+  void filterAuthors(String query) {
+    List<String> results = books
+        .where((book) =>
+            (book.author?.toLowerCase().contains(query.toLowerCase()) ?? false))
+        .map((book) => book.author ?? '')
+        .toList();
+    setState(() {
+      filteredAuthors = results;
+    });
+  }
+
+  void filterTitles(String query) {
+    List<String> results = books
+        .where((book) =>
+            (book.title?.toLowerCase().contains(query.toLowerCase()) ?? false))
+        .map((book) => book.title ?? '')
+        .toList();
+    setState(() {
+      filteredTitles = results;
+    });
+  }
+
+  void filterGenres(String query) {
+    List<String> results = books
+        .expand((book) => (book.genres ?? []).where(
+            (genre) => genre.toLowerCase().contains(query.toLowerCase())))
+        .toSet()
+        .toList();
+    setState(() {
+      filteredGenres = results;
+    });
+  }
+
+  void addBook() async {
+    try {
+      if (selectedISBN != null &&
+          selectedTitle != null &&
+          selectedAuthor != null &&
+          selectedGenre != null) {
         int userId = Provider.of<UserProvider>(context, listen: false).userID;
 
-        ApiService().addBook(
+        await ApiService().addBook(
           userId: userId,
-          title: title,
-          author: author,
-          genre: genre,
-          isbn: isbn,
-          format: format,
+          title: selectedTitle!,
+          author: selectedAuthor!,
+          genre: selectedGenre!,
+          isbn: selectedISBN!,
+          format: selectedFormat,
         );
 
-        // Clear the fields after the request is completed
-        _titleController.clear();
-        _authorController.clear();
-        _genreController.clear();
-        _isbnController.clear();
-
-        // Reset error messages
         setState(() {
-          _titleError = null;
-          _authorError = null;
-          _genreError = null;
-          _isbnError = null;
+          selectedISBN = null;
+          selectedTitle = null;
+          selectedAuthor = null;
+          selectedGenre = null;
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Successfully added the book to your reading list'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select all fields before adding a book.'),
           ),
         );
       }
     } catch (e) {
-      print('Error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to add book')),
+        const SnackBar(content: Text('Failed to add book')),
       );
     }
+  }
+
+  void selectedItem(String selectedValue, String type) {
+    setState(() {
+      if (type == 'isbn') {
+        selectedISBN = selectedValue;
+      } else if (type == 'title') {
+        selectedTitle = selectedValue;
+      } else if (type == 'author') {
+        selectedAuthor = selectedValue;
+      } else if (type == 'genre') {
+        selectedGenre = selectedValue;
+      }
+    });
   }
 
   void _refreshReadingList() {
@@ -107,38 +164,36 @@ class AddBookScreenState extends State<AddBookScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1F2020),
+      backgroundColor: const Color(0xFF1F2020),
       appBar: AppBar(
-        iconTheme: IconThemeData(
-          color: Colors.white,
-        ),
-        backgroundColor: Color(0xFF1F2020),
-        title: Text(
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xFF1F2020),
+        title: const Text(
           'Add Books Page',
           style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             onPressed: _refreshReadingList,
           ),
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Card(
-                color: Color(0xFF1F2020),
+                color: const Color(0xFF1F2020),
                 elevation: 5,
                 child: Padding(
-                  padding: EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
+                      const Text(
                         "Add a New Book",
                         style: TextStyle(
                           fontSize: 45,
@@ -146,114 +201,71 @@ class AddBookScreenState extends State<AddBookScreen> {
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 16),
-                      // Title
-                      TextField(
-                        controller: _titleController,
-                        style: TextStyle(color: Colors.white),
-                        cursorColor: Colors.white,
-                        decoration: InputDecoration(
-                          labelText: "Title",
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      if (_titleError != null)
-                        Text(
-                          _titleError!,
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      SizedBox(height: 16),
-                      // Author
-                      TextField(
-                        controller: _authorController,
-                        style: TextStyle(color: Colors.white),
-                        cursorColor: Colors.white,
-                        decoration: InputDecoration(
-                          labelText: "Author",
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      if (_authorError != null)
-                        Text(
-                          _authorError!,
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      SizedBox(height: 16),
-                      // Genre
-                      TextField(
-                        controller: _genreController,
-                        style: TextStyle(color: Colors.white),
-                        cursorColor: Colors.white,
-                        decoration: InputDecoration(
-                          labelText: "Genre",
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      if (_genreError != null)
-                        Text(
-                          _genreError!,
-                          style: TextStyle(color: Colors.red),
-                        ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // ISBN
-                      TextField(
-                        controller: _isbnController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(13),
-                        ],
-                        style: TextStyle(color: Colors.white),
-                        cursorColor: Colors.white,
-                        decoration: InputDecoration(
-                          labelText: "ISBN",
-                          labelStyle: TextStyle(color: Colors.white),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
-                          ),
-                        ),
+                      SearchDropdown(
+                        filterItems: (filter) {
+                          filterISBN(filter);
+                          return filteredISBN;
+                        },
+                        fillColor: Color(0xFF4c4d4d),
+                        onItemSelected: (selectedValue) {
+                          selectedItem(selectedValue, 'isbn');
+                        },
+                        hintText: 'Search ISBN...',
                       ),
-                      if (_isbnError != null)
-                        Text(
-                          _isbnError!,
-                          style: TextStyle(color: Colors.red),
-                        ),
+                      SizedBox(height: 20),
+                      // Title
+                      SearchDropdown(
+                        fillColor: Color(0xFF4c4d4d),
+                        filterItems: (filter) {
+                          filterTitles(filter);
+                          return filteredTitles;
+                        },
+                        onItemSelected: (selectedValue) {
+                          selectedItem(selectedValue, 'title');
+                        },
+                        hintText: 'Search Title...',
+                      ),
+                      SizedBox(height: 20),
+                      // Author
+                      SearchDropdown(
+                        fillColor: Color(0xFF4c4d4d),
+                        filterItems: (filter) {
+                          filterAuthors(filter);
+                          return filteredAuthors;
+                        },
+                        onItemSelected: (selectedValue) {
+                          selectedItem(selectedValue, 'author');
+                        },
+                        hintText: 'Search Author...',
+                      ),
+                      SizedBox(height: 20),
+                      // Genre
+                      SearchDropdown(
+                        fillColor: Color(0xFF4c4d4d),
+                        filterItems: (filter) {
+                          filterGenres(filter);
+                          return filteredGenres;
+                        },
+                        onItemSelected: (selectedValue) {
+                          selectedItem(selectedValue, 'genre');
+                        },
+                        hintText: 'Search Genre...',
+                      ),
                       SizedBox(height: 16),
-                      // Format
+                      // Format Selection
                       SizedBox(
                         height: 56,
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
+                            const Text(
                               "Format: ",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.white),
                             ),
-                            SizedBox(width: 16),
+                            const SizedBox(width: 20),
                             Row(
                               children: [
                                 GestureDetector(
@@ -274,16 +286,15 @@ class AddBookScreenState extends State<AddBookScreen> {
                                         },
                                         activeColor: Colors.white,
                                       ),
-                                      Text(
+                                      const Text(
                                         "Physical",
                                         style: TextStyle(
-                                          color: Colors.white,
-                                        ),
+                                            color: Colors.white, fontSize: 18),
                                       ),
                                     ],
                                   ),
                                 ),
-                                SizedBox(width: 16),
+                                const SizedBox(width: 20),
                                 GestureDetector(
                                   onTap: () {
                                     setState(() {
@@ -302,11 +313,10 @@ class AddBookScreenState extends State<AddBookScreen> {
                                         },
                                         activeColor: Colors.white,
                                       ),
-                                      Text(
+                                      const Text(
                                         "Digital",
                                         style: TextStyle(
-                                          color: Colors.white,
-                                        ),
+                                            color: Colors.white, fontSize: 18),
                                       ),
                                     ],
                                   ),
@@ -316,15 +326,15 @@ class AddBookScreenState extends State<AddBookScreen> {
                           ],
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // Add Book Button
                       ElevatedButton(
-                        onPressed: _addBook,
+                        onPressed: addBook,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF089DA1),
-                          minimumSize: Size(double.infinity, 56),
+                          backgroundColor: const Color(0xFF089DA1),
+                          minimumSize: const Size(double.infinity, 56),
                         ),
-                        child: Text(
+                        child: const Text(
                           "Add Book",
                           style: TextStyle(color: Colors.white, fontSize: 18),
                         ),
@@ -333,7 +343,7 @@ class AddBookScreenState extends State<AddBookScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               ReadingListSection(
                 key: _readingListKey,
                 onRefresh: _refreshReadingList,
