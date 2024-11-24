@@ -21,6 +21,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
   List<String> filteredBooks = [];
 
   String? selectedValue;
+  String message = "";
 
   TextEditingController searchController = TextEditingController();
 
@@ -50,9 +51,13 @@ class LocateBookScreenState extends State<LocateBookScreen> {
 
     // Listen for messages
     subscription.messages.listen((message) {
-      print('Received message: ${message.content}');
+      print("Received message: ${message.payload}");
+      String newStatus = message.payload['status'] ?? 'No status';
+      String newMessage = message.payload['message'] ?? 'No message';
+
       setState(() {
-        status = "Your Book was found. Congratulations!";
+        status = newStatus;
+        this.message = newMessage;
       });
     });
   }
@@ -110,6 +115,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
       if (data['message'] == 'Success') {
         setState(() {
           print('Response status code: ${response.statusCode}');
+          status = "Your Book was found. Congratulation!";
         });
       } else {
         setState(() {
