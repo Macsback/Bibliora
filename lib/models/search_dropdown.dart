@@ -6,13 +6,15 @@ class SearchDropdown extends StatelessWidget {
   final List<String> Function(String filter) filterItems;
   final void Function(String item) onItemSelected;
   final Color fillColor;
+  final String? selectedItem;
   final String hintText;
-  List<Book> books = [];
+  final List<Book> books = [];
 
   SearchDropdown({
     super.key,
     required this.filterItems,
     required this.onItemSelected,
+    required this.selectedItem,
     required this.fillColor,
     this.hintText = 'Search for a book...',
   });
@@ -22,8 +24,8 @@ class SearchDropdown extends StatelessWidget {
     return SizedBox(
       width: 350,
       child: DropdownSearch<String>(
+        selectedItem: selectedItem,
         onChanged: (selectedValue) {
-          print('Selected value: $selectedValue'); // Debugging line
           if (selectedValue != null) {
             onItemSelected(selectedValue);
           }

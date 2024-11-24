@@ -1,4 +1,4 @@
-import 'package:bibliora/screens/add_book_screen.dart';
+import 'package:bibliora/screens/add_user_book_screen.dart';
 import 'package:flutter/material.dart';
 
 class WelcomeSection extends StatelessWidget {
@@ -73,7 +73,7 @@ class WelcomeSection extends StatelessWidget {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => AddBookScreen()));
+                                builder: (context) => AddUserBookScreen()));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF089DA1),

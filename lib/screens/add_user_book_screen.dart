@@ -1,19 +1,22 @@
 import 'package:bibliora/models/book.dart';
 import 'package:bibliora/models/search_dropdown.dart';
+import 'package:bibliora/screens/add_requested_book.dart';
 import 'package:bibliora/sections/reading_list_section.dart';
 import 'package:bibliora/service/api_service.dart';
 import 'package:bibliora/service/user_provider.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:collection/collection.dart';
 
-class AddBookScreen extends StatefulWidget {
-  const AddBookScreen({super.key});
+class AddUserBookScreen extends StatefulWidget {
+  const AddUserBookScreen({super.key});
 
   @override
-  AddBookScreenState createState() => AddBookScreenState();
+  AddUserBookScreenState createState() => AddUserBookScreenState();
 }
 
-class AddBookScreenState extends State<AddBookScreen> {
+class AddUserBookScreenState extends State<AddUserBookScreen> {
   String? selectedISBN;
   String? selectedTitle;
   String? selectedAuthor;
@@ -35,18 +38,7 @@ class AddBookScreenState extends State<AddBookScreen> {
     fetchBooks();
   }
 
-  // Filter ISBN
-  void filterISBN(String query) {
-    List<String> results = books
-        .where((book) => (book.isbn?.contains(query) ?? false))
-        .map((book) => book.isbn ?? '')
-        .toList();
-    setState(() {
-      filteredISBN = results;
-    });
-  }
-
-  // Fetch book ISBN
+  // Fetch book Title and Author
   Future<void> fetchBooks() async {
     try {
       List<Book> fetchedBooks = await ApiService.fetchBooks();
@@ -66,41 +58,56 @@ class AddBookScreenState extends State<AddBookScreen> {
     }
   }
 
+  // Filter ISBN
+  void filterISBN(String query) {
+    setState(() {
+      List<String> results = books
+          .where((book) => (book.isbn?.contains(query) ?? false))
+          .map((book) => book.isbn ?? '')
+          .toList();
+      filteredISBN = results;
+    });
+  }
+
   // Filter Author
   void filterAuthors(String query) {
-    List<String> results = books
-        .where((book) =>
-            (book.author?.toLowerCase().contains(query.toLowerCase()) ?? false))
-        .map((book) => book.author ?? '')
-        .toList();
     setState(() {
+      List<String> results = books
+          .where((book) =>
+              (book.author?.toLowerCase().contains(query.toLowerCase()) ??
+                  false))
+          .map((book) => book.author ?? '')
+          .toList();
       filteredAuthors = results;
     });
   }
 
+  // Filter Title
   void filterTitles(String query) {
-    List<String> results = books
-        .where((book) =>
-            (book.title?.toLowerCase().contains(query.toLowerCase()) ?? false))
-        .map((book) => book.title ?? '')
-        .toList();
     setState(() {
+      List<String> results = books
+          .where((book) =>
+              (book.title?.toLowerCase().contains(query.toLowerCase()) ??
+                  false))
+          .map((book) => book.title ?? '')
+          .toList();
       filteredTitles = results;
     });
   }
 
+  // Filter Genre
   void filterGenres(String query) {
-    List<String> results = books
-        .expand((book) => (book.genres ?? []).where(
-            (genre) => genre.toLowerCase().contains(query.toLowerCase())))
-        .toSet()
-        .toList();
     setState(() {
+      List<String> results = books
+          .expand((book) => (book.genres ?? []).where(
+              (genre) => genre.toLowerCase().contains(query.toLowerCase())))
+          .toSet()
+          .toList();
       filteredGenres = results;
     });
   }
 
-  void addBook() async {
+  void addUserBook() async {
     try {
       if (selectedISBN != null &&
           selectedTitle != null &&
@@ -108,7 +115,7 @@ class AddBookScreenState extends State<AddBookScreen> {
           selectedGenre != null) {
         int userId = Provider.of<UserProvider>(context, listen: false).userID;
 
-        await ApiService().addBook(
+        await ApiService().addUserBook(
           userId: userId,
           title: selectedTitle!,
           author: selectedAuthor!,
@@ -157,7 +164,7 @@ class AddBookScreenState extends State<AddBookScreen> {
     });
   }
 
-  void _refreshReadingList() {
+  void refreshReadingList() {
     _readingListKey.currentState?.refreshReadingList();
   }
 
@@ -175,7 +182,7 @@ class AddBookScreenState extends State<AddBookScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _refreshReadingList,
+            onPressed: refreshReadingList,
           ),
         ],
       ),
@@ -202,54 +209,80 @@ class AddBookScreenState extends State<AddBookScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // ISBN
                       SearchDropdown(
-                        filterItems: (filter) {
-                          filterISBN(filter);
-                          return filteredISBN;
-                        },
-                        fillColor: Color(0xFF4c4d4d),
-                        onItemSelected: (selectedValue) {
-                          selectedItem(selectedValue, 'isbn');
-                        },
-                        hintText: 'Search ISBN...',
-                      ),
-                      SizedBox(height: 20),
-                      // Title
-                      SearchDropdown(
-                        fillColor: Color(0xFF4c4d4d),
+                        selectedItem: selectedTitle,
                         filterItems: (filter) {
                           filterTitles(filter);
                           return filteredTitles;
                         },
-                        onItemSelected: (selectedValue) {
-                          selectedItem(selectedValue, 'title');
+                        fillColor: const Color(0xFF4c4d4d),
+                        onItemSelected: (selectedTitle) {
+                          setState(() {
+                            this.selectedTitle = selectedTitle;
+                            Book? selectedBook = books.firstWhereOrNull(
+                              (book) => book.title == selectedTitle,
+                            ); // Find the matching book
+                            if (selectedBook != null) {
+                              selectedISBN = selectedBook.isbn;
+                              selectedAuthor = selectedBook.author;
+                              selectedGenre = selectedBook.genres?.join(', ');
+                            }
+                          });
                         },
                         hintText: 'Search Title...',
                       ),
-                      SizedBox(height: 20),
-                      // Author
+                      const SizedBox(height: 16),
                       SearchDropdown(
-                        fillColor: Color(0xFF4c4d4d),
+                        selectedItem: selectedISBN,
+                        filterItems: (filter) {
+                          filterISBN(filter);
+                          return filteredISBN;
+                        },
+                        fillColor: const Color(0xFF4c4d4d),
+                        onItemSelected: (selectedISBN) {
+                          setState(() {
+                            this.selectedISBN = selectedISBN;
+                            Book? selectedBook = books.firstWhereOrNull(
+                              (book) => book.isbn == selectedISBN,
+                            ); // Find the matching book
+                            if (selectedBook != null) {
+                              selectedTitle = selectedBook.title;
+                              selectedAuthor = selectedBook.author;
+                              selectedGenre = selectedBook.genres?.join(', ');
+                            }
+                          });
+                        },
+                        hintText: 'Search ISBN...',
+                      ),
+                      const SizedBox(height: 16),
+                      // Author Dropdown
+                      SearchDropdown(
+                        selectedItem: selectedAuthor,
                         filterItems: (filter) {
                           filterAuthors(filter);
                           return filteredAuthors;
                         },
-                        onItemSelected: (selectedValue) {
-                          selectedItem(selectedValue, 'author');
+                        fillColor: Color(0xFF4c4d4d),
+                        onItemSelected: (selectedAuthor) {
+                          setState(() {
+                            this.selectedAuthor = selectedAuthor;
+                          });
                         },
                         hintText: 'Search Author...',
                       ),
-                      SizedBox(height: 20),
-                      // Genre
+                      const SizedBox(height: 16),
+                      // Genre Dropdown
                       SearchDropdown(
-                        fillColor: Color(0xFF4c4d4d),
+                        selectedItem: selectedGenre,
                         filterItems: (filter) {
                           filterGenres(filter);
                           return filteredGenres;
                         },
-                        onItemSelected: (selectedValue) {
-                          selectedItem(selectedValue, 'genre');
+                        fillColor: Color(0xFF4c4d4d),
+                        onItemSelected: (selectedGenre) {
+                          setState(() {
+                            this.selectedGenre = selectedGenre;
+                          });
                         },
                         hintText: 'Search Genre...',
                       ),
@@ -329,7 +362,7 @@ class AddBookScreenState extends State<AddBookScreen> {
                       const SizedBox(height: 16),
                       // Add Book Button
                       ElevatedButton(
-                        onPressed: addBook,
+                        onPressed: addUserBook,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF089DA1),
                           minimumSize: const Size(double.infinity, 56),
@@ -339,6 +372,31 @@ class AddBookScreenState extends State<AddBookScreen> {
                           style: TextStyle(color: Colors.white, fontSize: 18),
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      RichText(
+                        text: TextSpan(
+                          text: "Book not found? No problem, ",
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 16),
+                          children: [
+                            TextSpan(
+                              text: "add a new book here.",
+                              style: const TextStyle(
+                                color: Color(0xFF089DA1),
+                                decoration: TextDecoration.underline,
+                              ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              AddBookScreen()));
+                                },
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -346,7 +404,7 @@ class AddBookScreenState extends State<AddBookScreen> {
               const SizedBox(height: 16),
               ReadingListSection(
                 key: _readingListKey,
-                onRefresh: _refreshReadingList,
+                onRefresh: refreshReadingList,
               ),
             ],
           ),

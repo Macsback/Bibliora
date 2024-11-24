@@ -1,5 +1,5 @@
 import 'package:bibliora/models/book.dart';
-import 'package:bibliora/screens/add_book_screen.dart';
+import 'package:bibliora/screens/add_user_book_screen.dart';
 import 'package:bibliora/service/user_provider.dart';
 import 'package:flutter/material.dart';
 import '../service/api_service.dart';
@@ -81,7 +81,7 @@ class ReadingListSectionState extends State<ReadingListSection> {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => AddBookScreen()));
+                              builder: (context) => AddUserBookScreen()));
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color(0xFF089DA1),

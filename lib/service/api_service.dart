@@ -121,8 +121,8 @@ class ApiService {
     }
   }
 
-  // Add a book to the database
-  Future<bool> addBook({
+  // Add book to the UserBook Table
+  Future<bool> addUserBook({
     required String title,
     required String author,
     required String genre,
@@ -132,7 +132,7 @@ class ApiService {
   }) async {
     try {
       final response = await https.post(
-        Uri.parse('$backendUrl/add_book/$userId'),
+        Uri.parse('$backendUrl/add_user_book/$userId'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'Title': title,
@@ -144,15 +144,44 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        // Return true if the book was added successfully
         return true;
       } else {
-        // Print error and return false if failed
         print('Failed to add book: ${response.body}');
         return false;
       }
     } catch (e) {
-      // Handle any errors and return false
+      print('Error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> addBook({
+    required String title,
+    required String author,
+    required String genre,
+    required String isbn,
+    required String format,
+  }) async {
+    try {
+      final response = await https.post(
+        Uri.parse('$backendUrl/add_book'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'Title': title,
+          'Author': author,
+          'Genre': genre,
+          'ISBN': isbn,
+          'Format': format,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Failed to add book: ${response.body}');
+        return false;
+      }
+    } catch (e) {
       print('Error: $e');
       return false;
     }

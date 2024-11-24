@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:bibliora/models/book.dart';
 
 class RecommendationSection extends StatefulWidget {
-  const RecommendationSection({super.key});
+  final VoidCallback? onRefresh;
+  const RecommendationSection({super.key, this.onRefresh});
 
   @override
   RecommendationSectionState createState() => RecommendationSectionState();
@@ -11,7 +12,23 @@ class RecommendationSection extends StatefulWidget {
 
 class RecommendationSectionState extends State<RecommendationSection> {
   List<Book> books = [];
-  List<double> bookRatings = [4.5, 3.0, 5.0, 4.0, 4.5, 3.5, 4.0, 4.5, 5.0, 3.5];
+  List<double> bookRatings = [
+    4.5,
+    3.0,
+    5.0,
+    4.0,
+    4.5,
+    3.5,
+    4.0,
+    4.5,
+    5.0,
+    3.5,
+    4.2,
+    4.0,
+    4.3,
+    3.8,
+    4.7
+  ];
 
   @override
   void initState() {
@@ -28,6 +45,13 @@ class RecommendationSectionState extends State<RecommendationSection> {
     } catch (e) {
       print('Error loading books: $e');
     }
+  }
+
+  void refreshBookList() {
+    setState(() {
+      books.clear();
+    });
+    loadBooks();
   }
 
   @override
@@ -55,7 +79,7 @@ class RecommendationSectionState extends State<RecommendationSection> {
               mainAxisSpacing: 30,
               childAspectRatio: 0.75,
             ),
-            itemCount: books.length < 10 ? books.length : 10,
+            itemCount: books.length < 15 ? books.length : 15,
             itemBuilder: (context, index) {
               var book = books[index];
               String imageAsset =

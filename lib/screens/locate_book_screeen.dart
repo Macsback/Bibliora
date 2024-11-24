@@ -20,6 +20,8 @@ class LocateBookScreenState extends State<LocateBookScreen> {
   List<Book> books = [];
   List<String> filteredBooks = [];
 
+  String? selectedValue;
+
   TextEditingController searchController = TextEditingController();
 
   String status = "Idle";
@@ -193,14 +195,15 @@ class LocateBookScreenState extends State<LocateBookScreen> {
             SizedBox(
               width: 350,
               child: SearchDropdown(
+                selectedItem: selectedValue,
                 filterItems: (filter) {
                   filterBooks(filter);
                   return filteredBooks;
                 },
                 fillColor: const Color(0xFFD76004),
-                onItemSelected: (selectedValue) {
+                onItemSelected: (value) {
                   setState(() {
-                    selectedValue = selectedValue;
+                    selectedValue = value;
                   });
                 },
               ),
