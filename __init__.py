@@ -9,9 +9,7 @@ import uuid
 from pubnub.pubnub import PubNub
 from pubnub.pnconfiguration import PNConfiguration
 
-
 load_dotenv()
-
 
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
@@ -29,6 +27,26 @@ pnconfig.uuid = generated_uuid
 pubnub = PubNub(pnconfig)
 
 
+# Function to check if running on a Raspberry Pi
+def is_raspberry_pi():
+    try:
+        # Check if running on Raspberry Pi by looking for the 'model' file
+        with open("/sys/firmware/devicetree/base/model", "r") as f:
+            model = f.read().lower()
+            return "raspberry pi" in model
+    except IOError:
+        return False
+
+
+# Conditionally import RPi.GPIO only if running on a Raspberry Pi
+if is_raspberry_pi():
+    import RPi.GPIO as GPIO
+
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(LED_pin, GPIO.OUT)
+    GPIO.setup(Buzzer_pin, GPIO.OUT)
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -37,43 +55,45 @@ def index():
 @app.route("/trigger", methods=["POST"])
 def trigger_method():
     try:
-        print("Scan Successful")
-        simulate_led_on_off()
-        simulate_beep()
-        response = {
-            "message": "Success",  # This message will be sent back to the frontend
-            "status": "LED and Buzzer Triggered!",
-        }
-        pubnub.publish().channel("device_control_channel").message(response).sync()
+        # Check if running on a Raspberry Pi
+        if is_raspberry_pi():
+            GPIO.output(LED_pin, True)
+            time.sleep(0.5)
+            GPIO.output(LED_pin, False)
 
-        return jsonify(message="Success")
+            beep(6)
+
+        response = {
+            "message": "Success",
+            "status": (
+                "LED and Buzzer Triggered!"
+                if is_raspberry_pi()
+                else "Simulation LED and Buzzer Triggered!"
+            ),
+        }
+
+        pubnub.publish().channel("PUBNUB_CHANNEL_NAME").message(response).sync()
+
+        return jsonify(response)
+
     except Exception as e:
         return jsonify(message=f"Error: {str(e)}")
 
 
-def simulate_led_on_off():
-    # Simulate the LED turning on and off
-    print(f"LED (Pin {LED_pin}) turned ON")
-    time.sleep(0.5)
-    print(f"LED (Pin {LED_pin}) turned OFF")
+def beep(repeat):
+    if is_raspberry_pi():
+        for i in range(repeat):
+            GPIO.output(Buzzer_pin, True)
+            time.sleep(0.001)
+            GPIO.output(Buzzer_pin, False)
+    else:
+        # Simulate beep in non-Raspberry Pi environments
+        print("Beep simulated")
 
 
-def simulate_beep():
-    # Simulate the beep sound by printing to console
-    print(f"Buzzer (Pin {Buzzer_pin}) beeped")
-
-
-def send_pubnub_message(message):
-    """Send a message to the PubNub channel."""
-    try:
-        pubnub.publish(
-            channel=CHANNEL,
-            message=message,
-            callback=pubnub_callback,
-            error=pubnub_error,
-        )
-    except Exception as e:
-        print(f"Error sending PubNub message: {str(e)}")
+# Clean up GPIO if running on a Raspberry Pi
+if is_raspberry_pi():
+    GPIO.cleanup()
 
 
 def get_db_connection():
@@ -242,23 +262,12 @@ def get_bookclubs(user_id=None):
     return jsonify(response)
 
 
-@app.route("/add_book/<int:user_id>", methods=["POST"])
-def add_book(user_id=None):
-    # Get the JSON data from the request
+@app.route("/add_user_book/<int:user_id>", methods=["POST"])
+def add_user_book(user_id=None):
     data = request.get_json()
 
-    # Extract the data
-    title = data.get("Title")
-    author = data.get("Author")
-    genre = data.get("Genre")
     isbn = data.get("ISBN")
-    format = data.get("Format")
 
-    # Check if all required fields are provided
-    if not all([title, author, genre, isbn, format]):
-        return jsonify({"error": "Missing required fields"}), 400
-
-    # Get database connection
     connection = get_db_connection()
     if connection is None:
         return jsonify({"error": "Failed to connect to the database"}), 500
@@ -266,17 +275,53 @@ def add_book(user_id=None):
     try:
         cursor = connection.cursor()
 
-        # Check if the book already exists in the Book table
-        cursor.execute("SELECT * FROM Book WHERE ISBN = %s", (isbn,))
-        book = cursor.fetchone()
+        cursor.execute(
+            "INSERT INTO UserBook (UserID, BookISBN) VALUES (%s, %s)", (user_id, isbn)
+        )
+        connection.commit()
 
-        if not book:
-            # If book doesn't exist, insert it
-            cursor.execute(
-                "INSERT INTO Book (ISBN, Title, Format) VALUES (%s, %s, %s)",
-                (isbn, title, format),
-            )
-            connection.commit()
+        return jsonify({"message": "Book successfully added to UserBook"}), 200
+
+    except Exception as e:
+        connection.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+@app.route("/add_book", methods=["POST"])
+def add_book():
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    # Hardcoded values for the book
+    title = "Cleverlands"
+    author = "Lucy Crehan"
+    genres = "Education"
+    isbn = "9781783524914"
+    format = "digital"
+
+    # Check if 'author' or 'genres' are missing or empty
+    if not author or not genres:
+        return (
+            jsonify({"Author and Genre cannot be empty"}),
+            400,
+        )
+
+    connection = get_db_connection()
+    if connection is None:
+        return jsonify({"error": "Failed to connect to the database"}), 500
+
+    try:
+        cursor = connection.cursor()
+
+        # Add Book (hardcoded data)
+        cursor.execute(
+            "INSERT INTO Book (ISBN, Title, Description, Format, DigitalLink, DigitalVersion, BorrowLink, IsAvailableForBorrow) VALUES (%s, %s, '', %s, null, null, '', 1)",
+            (isbn, title, format),
+        )
 
         # Check if the author exists, if not, add it
         cursor.execute("SELECT * FROM Author WHERE Name = %s", (author,))
@@ -290,49 +335,29 @@ def add_book(user_id=None):
             author_id = author_data[0]
 
         # Check if the genre exists, if not, add it
-        cursor.execute("SELECT * FROM Genre WHERE Name = %s", (genre,))
+        cursor.execute("SELECT * FROM Genre WHERE Name = %s", (genres,))
         genre_data = cursor.fetchone()
 
         if not genre_data:
-            cursor.execute("INSERT INTO Genre (Name) VALUES (%s)", (genre,))
+            cursor.execute("INSERT INTO Genre (Name) VALUES (%s)", (genres,))
             connection.commit()
             genre_id = cursor.lastrowid
         else:
             genre_id = genre_data[0]
 
-        # Check if the combination of BookISBN and AuthorID already exists in BookAuthor table
+        # Add combination of BookISBN and GenreID
         cursor.execute(
-            "SELECT * FROM BookAuthor WHERE BookISBN = %s AND AuthorID = %s",
-            (isbn, author_id),
-        )
-        book_author = cursor.fetchone()
-
-        if not book_author:
-            cursor.execute(
-                "INSERT INTO BookAuthor (BookISBN, AuthorID) VALUES (%s, %s)",
-                (isbn, author_id),
-            )
-            connection.commit()
-
-        # Check if the combination of BookISBN and GenreID already exists in BookGenre table
-        cursor.execute(
-            "SELECT * FROM BookGenre WHERE BookISBN = %s AND GenreID = %s",
+            "INSERT INTO BookGenre (BookISBN, GenreID) VALUES (%s, %s)",
             (isbn, genre_id),
         )
-        book_genre = cursor.fetchone()
+        connection.commit()
 
-        if not book_genre:
-            cursor.execute(
-                "INSERT INTO BookGenre (BookISBN, GenreID) VALUES (%s, %s)",
-                (isbn, genre_id),
-            )
-            connection.commit()
-
-        # Insert into UserBook table using the userId from the URL
+        # Add combination of BookISBN and AuthorID
         cursor.execute(
-            "INSERT INTO UserBook (UserID, BookISBN) VALUES (%s, %s)", (user_id, isbn)
+            "INSERT INTO BookAuthor (BookISBN, AuthorID) VALUES (%s, %s)",
+            (isbn, author_id),
         )
-        connection.commit()  # Commit the insertion to UserBook table
+        connection.commit()
 
         return jsonify({"message": "Book successfully added"}), 200
 
