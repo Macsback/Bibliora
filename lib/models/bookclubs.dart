@@ -11,9 +11,9 @@ class BookClub {
 
   factory BookClub.fromJson(Map<String, dynamic> json) {
     return BookClub(
-      bookClubId: json['BookClubID'],
-      bookClubName: json['Name'] ?? json['BookClubName'],
-      description: json['Description'],
+      bookClubId: json['book_club_id'],
+      bookClubName: json['name'],
+      description: json['description'],
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/screens/home.dart';
 import 'package:bibliora/sections/recommendation_section.dart';
 import 'package:bibliora/service/api_service.dart';
@@ -103,10 +104,10 @@ class AddBookScreenState extends State<AddBookScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1F2020),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: white,
         ),
         actions: [
           IconButton(
@@ -122,10 +123,10 @@ class AddBookScreenState extends State<AddBookScreen> {
           ),
           IconButton(onPressed: refreshBookList, icon: Icon(Icons.refresh))
         ],
-        backgroundColor: Color(0xFF1F2020),
+        backgroundColor: backgroundColor,
         title: Text(
-          'Add Books Page',
-          style: TextStyle(color: Colors.white),
+          'Add new Book',
+          style: TextStyle(color: white),
         ),
       ),
       body: SingleChildScrollView(
@@ -135,7 +136,7 @@ class AddBookScreenState extends State<AddBookScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Card(
-                color: Color(0xFF1F2020),
+                color: backgroundColor,
                 elevation: 5,
                 child: Padding(
                   padding: EdgeInsets.all(16.0),
@@ -147,76 +148,76 @@ class AddBookScreenState extends State<AddBookScreen> {
                         style: TextStyle(
                           fontSize: 45,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: white,
                         ),
                       ),
                       SizedBox(height: 16),
                       // Title
                       TextField(
                         controller: _titleController,
-                        style: TextStyle(color: Colors.white),
-                        cursorColor: Colors.white,
+                        style: TextStyle(color: white),
+                        cursorColor: white,
                         decoration: InputDecoration(
                           labelText: "Title",
-                          labelStyle: TextStyle(color: Colors.white),
+                          labelStyle: TextStyle(color: white),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: white),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: white),
                           ),
                         ),
                       ),
                       if (_titleError != null)
                         Text(
                           _titleError!,
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: red),
                         ),
                       SizedBox(height: 16),
 
                       // Author
                       TextField(
                         controller: _authorController,
-                        style: TextStyle(color: Colors.white),
-                        cursorColor: Colors.white,
+                        style: TextStyle(color: white),
+                        cursorColor: white,
                         decoration: InputDecoration(
                           labelText: "Author",
-                          labelStyle: TextStyle(color: Colors.white),
+                          labelStyle: TextStyle(color: white),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: white),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: white),
                           ),
                         ),
                       ),
                       if (_authorError != null)
                         Text(
                           _authorError!,
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: red),
                         ),
                       SizedBox(height: 16),
 
                       // Genre
                       TextField(
                         controller: _genreController,
-                        style: TextStyle(color: Colors.white),
-                        cursorColor: Colors.white,
+                        style: TextStyle(color: white),
+                        cursorColor: white,
                         decoration: InputDecoration(
                           labelText: "Genre",
-                          labelStyle: TextStyle(color: Colors.white),
+                          labelStyle: TextStyle(color: white),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: white),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: white),
                           ),
                         ),
                       ),
                       if (_genreError != null)
                         Text(
                           _genreError!,
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: red),
                         ),
                       SizedBox(height: 16),
 
@@ -228,23 +229,23 @@ class AddBookScreenState extends State<AddBookScreen> {
                           FilteringTextInputFormatter.digitsOnly,
                           LengthLimitingTextInputFormatter(13),
                         ],
-                        style: TextStyle(color: Colors.white),
-                        cursorColor: Colors.white,
+                        style: TextStyle(color: white),
+                        cursorColor: white,
                         decoration: InputDecoration(
                           labelText: "ISBN",
-                          labelStyle: TextStyle(color: Colors.white),
+                          labelStyle: TextStyle(color: white),
                           enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: white),
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.white),
+                            borderSide: BorderSide(color: white),
                           ),
                         ),
                       ),
                       if (_isbnError != null)
                         Text(
                           _isbnError!,
-                          style: TextStyle(color: Colors.red),
+                          style: TextStyle(color: red),
                         ),
                       SizedBox(height: 16),
 
@@ -258,7 +259,7 @@ class AddBookScreenState extends State<AddBookScreen> {
                               "Format: ",
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.white,
+                                color: white,
                               ),
                             ),
                             SizedBox(width: 16),
@@ -280,12 +281,12 @@ class AddBookScreenState extends State<AddBookScreen> {
                                             selectedFormat = value!;
                                           });
                                         },
-                                        activeColor: Colors.white,
+                                        activeColor: white,
                                       ),
                                       Text(
                                         "Physical",
                                         style: TextStyle(
-                                          color: Colors.white,
+                                          color: white,
                                         ),
                                       ),
                                     ],
@@ -308,12 +309,12 @@ class AddBookScreenState extends State<AddBookScreen> {
                                             selectedFormat = value!;
                                           });
                                         },
-                                        activeColor: Colors.white,
+                                        activeColor: white,
                                       ),
                                       Text(
                                         "Digital",
                                         style: TextStyle(
-                                          color: Colors.white,
+                                          color: white,
                                         ),
                                       ),
                                     ],
@@ -330,12 +331,12 @@ class AddBookScreenState extends State<AddBookScreen> {
                       ElevatedButton(
                         onPressed: _addBook,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF089DA1),
+                          backgroundColor: buttonColor,
                           minimumSize: Size(double.infinity, 56),
                         ),
                         child: Text(
                           "Add Book",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
+                          style: TextStyle(color: white, fontSize: 18),
                         ),
                       ),
                     ],

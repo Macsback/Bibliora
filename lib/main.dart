@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'screens/home.dart';
 
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ConfigManager.loadConfig();
@@ -21,6 +23,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
       title: 'Bibliora',
       home: HomeScreen(),
     );

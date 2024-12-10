@@ -1,3 +1,4 @@
+import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/sections/reading_list_section.dart';
 import 'package:bibliora/sections/user_bookclubs_section.dart';
 import 'package:bibliora/service/api_service.dart';
@@ -40,15 +41,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1F2020),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: white,
         ),
-        backgroundColor: Color(0xFF1F2020),
+        backgroundColor: backgroundColor,
         title: Text(
           'Profile Page',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: white),
         ),
       ),
       body: SingleChildScrollView(
@@ -76,18 +77,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                            color: white),
                       ),
                       Text(userEmail,
-                          style: TextStyle(fontSize: 16, color: Colors.white)),
+                          style: TextStyle(fontSize: 16, color: white)),
                       Text('Member Since: $memberSince',
-                          style: TextStyle(fontSize: 16, color: Colors.white)),
+                          style: TextStyle(fontSize: 16, color: white)),
                       SizedBox(height: 16),
                       Text('Actions',
                           style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white)),
+                              color: white)),
                       SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -95,25 +96,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ElevatedButton(
                             onPressed: () {},
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF089DA1)),
+                                backgroundColor: buttonColor),
                             child: Text('Edit Profile',
-                                style: TextStyle(color: Colors.white)),
+                                style: TextStyle(color: white)),
                           ),
                           SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () {},
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF089DA1)),
+                                backgroundColor: buttonColor),
                             child: Text('Change Password',
-                                style: TextStyle(color: Colors.white)),
+                                style: TextStyle(color: white)),
                           ),
                           SizedBox(width: 8),
                           ElevatedButton(
                             onPressed: () {},
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF089DA1)),
-                            child: Text('Logout',
-                                style: TextStyle(color: Colors.white)),
+                                backgroundColor: buttonColor),
+                            child:
+                                Text('Logout', style: TextStyle(color: white)),
                           ),
                         ],
                       ),
@@ -140,7 +141,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.all(16.0),
                 child: Text(
                   '© 2024 Bibliora | All Rights Reserved',
-                  style: TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: white, fontSize: 14),
                 ),
               ),
             ],

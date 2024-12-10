@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:bibliora/models/book.dart';
 import 'package:bibliora/models/user.dart';
 import 'package:bibliora/models/bookclubs.dart';
@@ -29,6 +30,27 @@ class ApiService {
     } catch (e) {
       print('Error fetching books: $e');
       return [];
+    }
+  }
+
+  //Get the book thumbnail
+  static Future<Uint8List?> fetchImageFromBackend(String coverImageUrl) async {
+    try {
+      final response = await https.post(
+        Uri.parse('$backendUrl/fetch-image'),
+        headers: {'Content-Type': 'application/json'},
+        body: '{"coverImageUrl": "$coverImageUrl"}',
+      );
+
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        print("Failed to fetch image: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error fetching image: $e");
+      return null;
     }
   }
 

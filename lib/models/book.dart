@@ -1,3 +1,5 @@
+import 'package:http/http.dart' as https;
+
 class Book {
   final String? title;
   final String? author;
@@ -6,7 +8,8 @@ class Book {
   final String? isbn;
   final String? borrowLink;
   final String? format;
-  final bool? isAvailableForBorrow;
+  final String? publishYear;
+  final String? coverImageUrl;
 
   Book({
     this.title,
@@ -16,20 +19,26 @@ class Book {
     this.isbn,
     this.borrowLink,
     this.format,
-    this.isAvailableForBorrow,
+    this.coverImageUrl,
+    this.publishYear,
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
+    String? coverImageUrl = json['cover_image_url'];
+
+    coverImageUrl = coverImageUrl?.replaceFirst("http://", "https://");
+
     return Book(
-      title: json['Title'] ?? '',
-      author: json['Author'] ?? '',
-      genres:
-          (json['Genres'] as String).split(',').map((s) => s.trim()).toList(),
-      description: json['Description'] ?? '',
-      isbn: json['ISBN'] ?? '',
-      borrowLink: json['BorrowLink'] ?? '',
-      format: json['Format'] ?? '',
-      isAvailableForBorrow: json['IsAvailableForBorrow'] == 1,
+      title: json['title'] ?? 'Unknown',
+      author: json['author'] ?? 'Unknown',
+      genres: (json['genres'] != null && json['genres'] is String)
+          ? (json['genres'] as String).split(',').map((s) => s.trim()).toList()
+          : [],
+      description: json['description'] ?? 'Unknown',
+      isbn: json['isbn'] ?? 'Unknown',
+      borrowLink: json['borrowlink'] ?? 'Unknown',
+      coverImageUrl: coverImageUrl,
+      publishYear: json['publish_year']?.toString() ?? 'Unknown',
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/models/book.dart';
 import 'package:bibliora/models/search_dropdown.dart';
 import 'package:bibliora/screens/add_requested_book.dart';
@@ -133,7 +134,7 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Successfully added the book to your reading list'),
+            content: Text('Successfully added the book to your collection'),
           ),
         );
       } else {
@@ -171,13 +172,13 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1F2020),
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: const Color(0xFF1F2020),
-        title: const Text(
-          'Add Books Page',
-          style: TextStyle(color: Colors.white),
+        iconTheme: IconThemeData(color: white),
+        backgroundColor: backgroundColor,
+        title: Text(
+          'Add to Reading list',
+          style: TextStyle(color: white),
         ),
         actions: [
           IconButton(
@@ -193,19 +194,19 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Card(
-                color: const Color(0xFF1F2020),
+                color: backgroundColor,
                 elevation: 5,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         "Add a New Book",
                         style: TextStyle(
                           fontSize: 45,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: white,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -293,10 +294,9 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               "Format: ",
-                              style:
-                                  TextStyle(fontSize: 18, color: Colors.white),
+                              style: TextStyle(fontSize: 18, color: white),
                             ),
                             const SizedBox(width: 20),
                             Row(
@@ -317,12 +317,12 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
                                             selectedFormat = value!;
                                           });
                                         },
-                                        activeColor: Colors.white,
+                                        activeColor: white,
                                       ),
-                                      const Text(
+                                      Text(
                                         "Physical",
                                         style: TextStyle(
-                                            color: Colors.white, fontSize: 18),
+                                            color: white, fontSize: 18),
                                       ),
                                     ],
                                   ),
@@ -344,12 +344,12 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
                                             selectedFormat = value!;
                                           });
                                         },
-                                        activeColor: Colors.white,
+                                        activeColor: white,
                                       ),
-                                      const Text(
+                                      Text(
                                         "Digital",
                                         style: TextStyle(
-                                            color: Colors.white, fontSize: 18),
+                                            color: white, fontSize: 18),
                                       ),
                                     ],
                                   ),
@@ -364,25 +364,24 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
                       ElevatedButton(
                         onPressed: addUserBook,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF089DA1),
+                          backgroundColor: boxShadowColor,
                           minimumSize: const Size(double.infinity, 56),
                         ),
-                        child: const Text(
+                        child: Text(
                           "Add Book",
-                          style: TextStyle(color: Colors.white, fontSize: 18),
+                          style: TextStyle(color: white, fontSize: 18),
                         ),
                       ),
                       const SizedBox(height: 16),
                       RichText(
                         text: TextSpan(
                           text: "Book not found? No problem, ",
-                          style: const TextStyle(
-                              color: Colors.white, fontSize: 16),
+                          style: TextStyle(color: white, fontSize: 16),
                           children: [
                             TextSpan(
                               text: "add a new book here.",
-                              style: const TextStyle(
-                                color: Color(0xFF089DA1),
+                              style: TextStyle(
+                                color: boxShadowColor,
                                 decoration: TextDecoration.underline,
                               ),
                               recognizer: TapGestureRecognizer()

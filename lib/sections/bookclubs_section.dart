@@ -1,3 +1,4 @@
+import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/models/bookclubs.dart';
 import 'package:bibliora/service/api_service.dart';
 import 'package:flutter/material.dart';
@@ -42,7 +43,7 @@ class BookClubsSectionState extends State<BookClubsSection> {
               style: TextStyle(
                 fontSize: 50,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: white,
               ),
               textAlign: TextAlign.center,
             ),
@@ -52,7 +53,7 @@ class BookClubsSectionState extends State<BookClubsSection> {
             Center(
               child: Text(
                 'No book clubs available.',
-                style: TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(color: white, fontSize: 16),
               ),
             )
           else
@@ -70,17 +71,17 @@ class BookClubsSectionState extends State<BookClubsSection> {
                       width: 400,
                       height: 400,
                       decoration: BoxDecoration(
-                        color: Color(0xFF1F2020),
+                        color: backgroundColor,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0x60089DA1),
+                            color: boxShadowColor,
                             blurRadius: 2,
                             spreadRadius: 3,
                           ),
                         ],
                         border: Border.all(
-                          color: Color(0x80089DA1),
+                          color: boxShadowColor,
                           width: 2,
                         ),
                       ),
@@ -106,7 +107,7 @@ class BookClubsSectionState extends State<BookClubsSection> {
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: white,
                             ),
                           ),
                           SizedBox(height: 10),
@@ -117,7 +118,7 @@ class BookClubsSectionState extends State<BookClubsSection> {
                               club.description ?? 'Unknown Description',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.white,
+                                color: white,
                                 fontWeight: FontWeight.normal,
                               ),
                               textAlign: TextAlign.left,

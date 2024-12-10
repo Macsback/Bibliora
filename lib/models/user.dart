@@ -13,9 +13,9 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      userId: json['UserID'],
-      username: json['Username'],
-      email: json['Email'],
+      userId: json['user_id'],
+      username: json['username'],
+      email: json['email'],
       memberSince: json['MemberSince'],
     );
   }

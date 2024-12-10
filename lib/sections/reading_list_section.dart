@@ -106,8 +106,7 @@ class ReadingListSectionState extends State<ReadingListSection> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: userBooks.take(6).map((book) {
-                    String imageAsset =
-                        'assets/${(book.title ?? '').replaceAll(RegExp(r'\s+'), '_').toLowerCase()}.jpg';
+                    String coverImageUrl = book.coverImageUrl ?? '';
                     return Padding(
                       padding: EdgeInsets.only(right: 30, left: 20),
                       child: Container(
@@ -132,8 +131,8 @@ class ReadingListSectionState extends State<ReadingListSection> {
                         child: Column(
                           children: [
                             // Book cover
-                            Image.asset(
-                              imageAsset,
+                            Image.network(
+                              coverImageUrl,
                               height: 200,
                               fit: BoxFit.contain,
                             ),

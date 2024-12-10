@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/models/search_dropdown.dart';
 import 'package:bibliora/service/config_manager.dart';
 import 'package:http/http.dart' as https;
@@ -141,17 +142,17 @@ class LocateBookScreenState extends State<LocateBookScreen> {
     return Scaffold(
       appBar: AppBar(
         iconTheme: IconThemeData(
-          color: Colors.white,
+          color: white,
         ),
         title: Text(
           'Locate your Book',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: white),
         ),
-        backgroundColor: Color(0xFF1F2020),
+        backgroundColor: backgroundColor,
       ),
       body: Container(
         width: double.infinity,
-        color: Color(0xFF1F2020),
+        color: backgroundColor,
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -159,7 +160,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
             Icon(
               Icons.book_outlined,
               size: 100,
-              color: Colors.white,
+              color: white,
             ),
             SizedBox(height: 20),
             Text(
@@ -168,7 +169,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: white,
               ),
             ),
             SizedBox(height: 20),
@@ -180,18 +181,18 @@ class LocateBookScreenState extends State<LocateBookScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 17,
-                    color: Colors.white,
+                    color: white,
                   ),
                 ),
                 SizedBox(width: 10),
                 Tooltip(
                   message:
                       "Press 'Locate Book' to light up an \nLED and trigger a small vibration \nto show the book's location.",
-                  textStyle: TextStyle(fontSize: 16, color: Colors.white),
+                  textStyle: TextStyle(fontSize: 16, color: white),
                   padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
                   child: Icon(
                     Icons.help_outline,
-                    color: Colors.white,
+                    color: white,
                   ),
                 ),
               ],
@@ -206,7 +207,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
                   filterBooks(filter);
                   return filteredBooks;
                 },
-                fillColor: const Color(0xFFD76004),
+                fillColor: orange,
                 onItemSelected: (value) {
                   setState(() {
                     selectedValue = value;
@@ -218,7 +219,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
             ElevatedButton(
               onPressed: triggerAction,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF089DA1),
+                backgroundColor: buttonColor,
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 textStyle: TextStyle(fontSize: 16),
                 shape: RoundedRectangleBorder(
@@ -228,7 +229,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
               child: Text(
                 'Locate your Book',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: white,
                 ),
               ),
             ),
@@ -237,7 +238,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
             ),
             Text(
               status,
-              style: TextStyle(color: Colors.white, fontSize: 18),
+              style: TextStyle(color: white, fontSize: 18),
             )
           ],
         ),
