@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+    <div class="login-container">
+        <h1>Login to Access the Backend</h1>
+        <div id="google-signin-button" class="google-signin-btn"></div>
+        <p>By logging in, you agree to our terms and conditions.</p>
+    </div>
+
+    <script>
+        const signInButton = document.getElementById("google-signin-button");
+
+        signInButton.innerHTML = `
+            <button onclick="window.location.href='/login'" class="btn btn-light btn-lg d-flex align-items-center shadow-sm border rounded-pill px-4 py-2 google-signin-btn">
+            <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google Logo" class="me-2" width="24" height="24">
+            <span>Sign in with Google</span>
+            </button> 
+        `;
+    </script>
+</body>
+
+</html>

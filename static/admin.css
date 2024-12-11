@@ -1,0 +1,93 @@
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f7f7f7;
+    color: #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 20px;
+}
+
+/* Container for the content */
+.container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    max-width: 1000px;
+    overflow-x: auto;
+}
+
+/* Title styling */
+.title {
+    text-align: center;
+    font-size: 32px;
+    color: #4A90E2;
+    margin-bottom: 30px;
+}
+
+/* Table styling */
+.sessions-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+.sessions-table th, .sessions-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.sessions-table th {
+    background-color: #4A90E2;
+    color: white;
+}
+
+.sessions-table tr:hover {
+    background-color: #f0f8ff;
+}
+
+/* Button styling */
+.button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: #4A90E2;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button:hover {
+    background-color: #357ABD;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .title {
+        font-size: 24px;
+    }
+
+    .sessions-table th, .sessions-table td {
+        font-size: 14px;
+    }
+}

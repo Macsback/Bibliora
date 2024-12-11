@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="title">Active Sessions</h1>
+
+        <table class="sessions-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Session Created At</th>
+                    <th>Session Expires At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for google_id, session_data in active_sessions.items() %}
+                <tr>
+                    <td>{{ session_data.google_id }}</td>
+                    <td>{{ session_data.name }}</td>
+                    <td>{{ session_data.email }}</td>
+                    <td>{{ session_data.created_at }}</td>
+                    <td>{{ session_data.expires_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button onclick="backButton()" class="button">Back to Navigation</button>
+    </div>
+
+    <script>
+        function backButton() {
+            window.location.href = "{{ url_for('navigation') }}";
+        }
+    </script>
+</body>
+
+</html>

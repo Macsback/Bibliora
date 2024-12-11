@@ -1,30 +1,203 @@
-from dotenv import load_dotenv
 import os
-import mysql.connector
-from flask import Flask, jsonify, request, render_template
-from mysql.connector import Error
-from flask_cors import CORS
 import time
 import uuid
-from pubnub.pubnub import PubNub
-from pubnub.pnconfiguration import PNConfiguration
+import requests
+from dotenv import load_dotenv
+
+# Database and queries
+import mysql.connector
+from mysql.connector import Error
+from db import get_db_connection
+from queries import (
+    get_all_users,
+    get_user_by_id,
+    get_books_by_user,
+    get_all_books,
+    get_bookclubs_by_user,
+    get_all_bookclubs,
+    get_user_by_google_id,
+)
+
+# Flask and CORS
+from flask import (
+    Flask,
+    jsonify,
+    request,
+    render_template,
+    send_file,
+    redirect,
+    abort,
+    url_for,
+    session,
+)
+from flask_cors import CORS
+from io import BytesIO
+from functools import wraps
+
+# PubNub service
+from pubnub_service import init_pubnub, publish_message
+
+# Google Login
+import pathlib
+from google.oauth2 import id_token
+from google_auth_oauthlib.flow import Flow
+import google.auth.transport.requests
+import cachecontrol
+import secrets
+from datetime import datetime, timedelta
+from flask_dance.contrib.google import make_google_blueprint, google
+
 
 load_dotenv()
 
+# App
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
 CORS(app)
 
+
+# Configure Flask app to use Google OAuth
+app.config["OAUTHLIB_INSECURE_TRANSPORT"] = False
+app.config["SESSION_PERMANENT"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=10)
+REDIRECT_URI = os.getenv("REDIRECT_URI")
+SESSION_LIFETIME = timedelta(minutes=10)
+
+active_sessions = {}
+admin_google_ids = os.getenv("ADMIN_GOOGLE_ID")
+
+google_bp = make_google_blueprint(
+    client_id=os.getenv("GOOGLE_CLIENT_ID"),
+    client_secret=os.getenv("GOOGLE_CLIENT_SECRET"),
+    redirect_to="callback",
+    scope=[
+        "openid",
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email",
+    ],
+)
+app.register_blueprint(google_bp, url_prefix="/login")
+
+
+# Hardware
 LED_pin = 12
 Buzzer_pin = 11
 
-pnconfig = PNConfiguration()
-pnconfig.subscribe_key = os.getenv("PUBNUB_SUBSCRIBE_KEY")
-pnconfig.publish_key = os.getenv("PUBNUB_PUBLISH_KEY")
-generated_uuid = str(uuid.uuid4())
-pnconfig.uuid = generated_uuid
+# Initialize PubNub
+pubnub = init_pubnub()
 
-pubnub = PubNub(pnconfig)
+
+@app.route("/")
+def index():
+    return render_template("login.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not google.authorized:
+        return redirect(url_for("google.login"))
+
+    return redirect(url_for("navigation"))
+
+
+@app.route("/callback")
+def callback():
+    if google.authorized:
+        user_info = google.get("/oauth2/v3/userinfo").json()
+        session["created"] = time.time()
+        if "id" in user_info:
+            session.permanent = True
+            session["google_id"] = user_info["id"]
+            session["email"] = user_info["email"]
+            session["name"] = user_info["name"]
+            return redirect(url_for("navigation"))
+    return redirect(url_for("navigation"))
+
+
+@app.route("/logout")
+def logout():
+    google_id = session.get("google_id")
+    if google_id in active_sessions:
+        del active_sessions[google_id]
+
+    session.clear()
+    return redirect("/")
+
+
+def login_is_required(function):
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        if "google_id" not in session:
+            return redirect(url_for("login"))
+        return function(*args, **kwargs)
+
+    return wrapper
+
+
+@app.route("/navigation")
+@login_is_required
+def navigation():
+    user_google_id = session.get("google_id")
+    is_admin = user_google_id in admin_google_ids
+
+    # Extract user info after authentication
+    resp = google.get("/oauth2/v2/userinfo")
+    if resp.ok:
+        user_info = resp.json()
+        user_id = user_info["id"]
+        name = user_info["name"]
+        email = user_info["email"]
+
+        # Create session
+        session["google_id"] = user_id
+        session["name"] = name
+        session["email"] = email
+        session.permanent = True
+
+        expires_at = datetime.now() + SESSION_LIFETIME
+        start_at = datetime.now().strftime("%H:%M")
+        expire_time = expires_at.strftime("%H:%M")
+
+        # Add to active sessions
+        active_sessions[user_id] = {
+            "google_id": user_id,
+            "name": name,
+            "email": email,
+            "created_at": start_at,
+            "expires_at": expire_time,
+        }
+
+    return render_template(
+        "navigation.html",
+        is_admin=is_admin,
+        user_id=user_google_id,
+        name=name,
+        email=email,
+        created_at=start_at,
+        expires_at=expire_time,
+    )
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("google_id") not in admin_google_ids:
+            abort(403)
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+@app.route("/admin")
+@admin_required
+def admin_page():
+    google_id = session.get("google_id")
+    if not google_id:
+        return redirect(url_for("login"))
+    if google_id not in admin_google_ids:
+        return "Access Denied: You do not have admin privileges.", 403
+
+    return render_template("admin.html", active_sessions=active_sessions)
 
 
 # Function to check if running on a Raspberry Pi
@@ -47,12 +220,8 @@ if is_raspberry_pi():
     GPIO.setup(Buzzer_pin, GPIO.OUT)
 
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-
 @app.route("/trigger", methods=["POST"])
+@login_is_required
 def trigger_method():
     try:
         # Check if running on a Raspberry Pi
@@ -72,7 +241,8 @@ def trigger_method():
             ),
         }
 
-        pubnub.publish().channel("PUBNUB_CHANNEL_NAME").message(response).sync()
+        # Use PubNub to publish the message
+        publish_message(pubnub, "PUBNUB_CHANNEL_NAME", response)
 
         return jsonify(response)
 
@@ -96,191 +266,142 @@ if is_raspberry_pi():
     GPIO.cleanup()
 
 
-def get_db_connection():
-    try:
-        db_host = os.getenv("DB_HOST")
-        db_user = os.getenv("DB_USER")
-        db_password = os.getenv("DB_PASSWORD")
-        db_name = os.getenv("DB_NAME")
-
-        connection = mysql.connector.connect(
-            host=db_host,
-            user=db_user,
-            password=db_password,
-            database=db_name,
-            ssl_disabled=True,
-        )
-
-        if connection.is_connected():
-            print("Database connection established successfully!")
-            return connection
-
-    except mysql.connector.Error as err:
-        print(f"Database connection error: {err}")
-        return None
-
-
 @app.route("/users", methods=["GET"])
 @app.route("/users/<int:user_id>", methods=["GET"])
+@login_is_required
 def get_user(user_id=None):
+    if user_id is not None:
+        if not session.get("google_id") in admin_google_ids:
+            return jsonify({"error": "Admin access required"}), 403
     connection = get_db_connection()
     if connection is None:
         return jsonify({"error": "Failed to connect to the database"}), 500
 
     cursor = connection.cursor(dictionary=True)
 
-    if user_id is not None:
-        # Fetch a specific user by ID
-        query = "SELECT * FROM User WHERE UserID = %s"
-        cursor.execute(query, (user_id,))
-        result = cursor.fetchone()
-
-        if result:  # Format the MemberSince field
-            if result.get("MemberSince"):
-                result["MemberSince"] = result["MemberSince"].strftime("%Y-%m-%d")
-            return jsonify({"user": result}), 200
-        else:
-            return jsonify({"error": "User not found"}), 404
+    if user_id:
+        result = get_user_by_id(cursor, user_id)
+        return jsonify({"user": result}), 200
     else:
-        # Fetch all users
-        query = "SELECT * FROM User"
-        cursor.execute(query)
-        results = cursor.fetchall()
-
-        # Format MemberSince field for all users
-        for user in results:
-            if user.get("MemberSince"):
-                user["MemberSince"] = user["MemberSince"].strftime("%Y-%m-%d")
-
+        results = get_all_users(cursor)
         return jsonify({"users": results}), 200
 
 
 @app.route("/books", methods=["GET"])
 @app.route("/user_books/<int:user_id>", methods=["GET"])
+@login_is_required
 def get_books(user_id=None):
+    if user_id is not None:
+        if not session.get("google_id") in admin_google_ids:
+            return jsonify({"error": "Admin access required"}), 403
     connection = get_db_connection()
     if connection is None:
         return jsonify({"error": "Database connection failed"}), 500
 
     cursor = connection.cursor(dictionary=True)
-    try:  # If user_id is provided, fetch user-specific books
-        if user_id is not None:
-            cursor.execute(
-                """
-                SELECT 
-                    UserBook.UserID,
-                    UserBook.BookISBN, 
-                    Book.Title, 
-                    Book.Description, 
-                    Author.Name AS Author,
-                    GROUP_CONCAT(Genre.Name) AS Genres,
-                    UserBook.IsDownloaded,
-                    UserBook.IsBorrowed,
-                    UserBook.BorrowStartDate,
-                    UserBook.BorrowEndDate
-                FROM UserBook
-                JOIN Book ON UserBook.BookISBN = Book.ISBN
-                JOIN BookAuthor ON Book.ISBN = BookAuthor.BookISBN
-                JOIN Author ON BookAuthor.AuthorID = Author.AuthorID
-                LEFT JOIN BookGenre ON Book.ISBN = BookGenre.BookISBN 
-                LEFT JOIN Genre ON BookGenre.GenreID = Genre.GenreID  
-                WHERE UserBook.UserID = %s
-                GROUP BY UserBook.UserID, UserBook.BookISBN
-                """,
-                (user_id,),
-            )
-            books = cursor.fetchall()
+
+    try:
+        if user_id:
+            books = get_books_by_user(cursor, user_id)
             response = {"user_books": books}
-        else:  # If no user_id is provided, fetch all books
-            cursor.execute(
-                """
-                SELECT 
-                    Book.ISBN, 
-                    Book.Title, 
-                    Book.Description, 
-                    Book.Format, 
-                    Book.DigitalLink,
-                    Book.DigitalVersion, 
-                    Book.BorrowLink, 
-                    Book.IsAvailableForBorrow,
-                    Author.Name AS Author,
-                    GROUP_CONCAT(Genre.Name) AS Genres
-                FROM Book
-                JOIN BookAuthor ON Book.ISBN = BookAuthor.BookISBN
-                JOIN Author ON BookAuthor.AuthorID = Author.AuthorID
-                LEFT JOIN BookGenre ON Book.ISBN = BookGenre.BookISBN 
-                LEFT JOIN Genre ON BookGenre.GenreID = Genre.GenreID      
-                GROUP BY Book.ISBN
-                """
-            )
-            books = cursor.fetchall()
+        else:
+            books = get_all_books(cursor)
             response = {"books": books}
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     finally:
         cursor.close()
         connection.close()
-
     return jsonify(response)
+
+
+@app.route("/fetch-image", methods=["POST"])
+@login_is_required
+def fetch_image():
+    data = request.get_json()
+    cover_image_url = data.get("coverImageUrl")
+
+    response = requests.get(cover_image_url)
+
+    try:
+        if response.status_code == 200:
+            image_bytes = BytesIO(response.content)
+            return send_file(image_bytes, mimetype="image/jpeg")
+        else:
+            return jsonify({"error": "Failed to fetch image from Google Books"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/bookclubs", methods=["GET"])
 @app.route("/user_bookclubs/<int:user_id>", methods=["GET"])
+@login_is_required
 def get_bookclubs(user_id=None):
+    if user_id is not None:
+        if not session.get("google_id") in admin_google_ids:
+            return jsonify({"error": "Admin access required"}), 403
+
     connection = get_db_connection()
     if connection is None:
         return jsonify({"error": "Failed to connect to the database"}), 500
 
     cursor = connection.cursor(dictionary=True)
-    try:
-        if user_id is not None:
-            cursor.execute(
-                """
-                SELECT 
-                    BookClub.BookClubID,
-                    BookClub.Name AS BookClubName,
-                    BookClub.Description
-                FROM UserBookClub
-                JOIN BookClub ON UserBookClub.BookClubID = BookClub.BookClubID
-                WHERE UserBookClub.UserID = %s
-                """,
-                (user_id,),
-            )
-            bookclubs = cursor.fetchall()
-            response = {"user_bookclubs": bookclubs}
-        else:
-            cursor.execute("SELECT * FROM BookClub")
-            bookclubs = cursor.fetchall()
-            response = {"bookclubs": bookclubs}
 
+    try:
+        if user_id:
+            bookclubs = get_bookclubs_by_user(cursor, user_id)
+            if bookclubs:
+                for bookclub in bookclubs:
+                    if bookclub.get("member_since"):
+                        bookclub["member_since"] = bookclub["member_since"].strftime(
+                            "%Y-%m-%d"
+                        )
+                return jsonify({"user_bookclubs": bookclubs}), 200
+            else:
+                return jsonify({"error": "User has no Book Clubs"}), 404
+        else:
+            # Fetch all bookclubs
+            bookclubs = get_all_bookclubs(cursor)
+            if bookclubs:
+                # Format 'created_at' and 'member_since' fields
+                for bookclub in bookclubs:
+                    if bookclub.get("created_at"):
+                        bookclub["created_at"] = bookclub["created_at"].strftime(
+                            "%Y-%m-%d"
+                        )
+                    if bookclub.get("member_since"):
+                        bookclub["member_since"] = bookclub["member_since"].strftime(
+                            "%Y-%m-%d"
+                        )
+                return jsonify({"bookclubs": bookclubs}), 200
+            else:
+                return jsonify({"error": "No Book Clubs found"}), 404
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
     finally:
         cursor.close()
         connection.close()
 
-    return jsonify(response)
 
-
-@app.route("/add_user_book/<int:user_id>", methods=["POST"])
+@app.route("/add_user_book/<int:user_id>", methods=["POST"], endpoint="add_user_book")
+@login_is_required
 def add_user_book(user_id=None):
     data = request.get_json()
 
     isbn = data.get("ISBN")
-
     connection = get_db_connection()
     if connection is None:
         return jsonify({"error": "Failed to connect to the database"}), 500
 
     try:
         cursor = connection.cursor()
-
         cursor.execute(
-            "INSERT INTO UserBook (UserID, BookISBN) VALUES (%s, %s)", (user_id, isbn)
+            "INSERT INTO user_books (user_id, book_isbn) VALUES (%s, %s)",
+            (user_id, isbn),
         )
         connection.commit()
 
-        return jsonify({"message": "Book successfully added to UserBook"}), 200
+        return jsonify({"message": "Book successfully added to UserBooks"}), 200
 
     except Exception as e:
         connection.rollback()
@@ -291,84 +412,22 @@ def add_user_book(user_id=None):
         connection.close()
 
 
-@app.route("/add_book", methods=["POST"])
-def add_book():
+@app.route("/add_book", methods=["POST"], endpoint="add_book_request")
+@login_is_required
+def add_book_request():
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 400
 
-    # Hardcoded values for the book
-    title = "Cleverlands"
-    author = "Lucy Crehan"
-    genres = "Education"
-    isbn = "9781783524914"
-    format = "digital"
+    data = request.get_json()
+    response = export_book_request_to_file(data)
+    if "error" in response:
+        return jsonify(response), 500
+    return jsonify(response), 200
 
-    # Check if 'author' or 'genres' are missing or empty
-    if not author or not genres:
-        return (
-            jsonify({"Author and Genre cannot be empty"}),
-            400,
-        )
 
+def main():
     connection = get_db_connection()
-    if connection is None:
-        return jsonify({"error": "Failed to connect to the database"}), 500
-
-    try:
-        cursor = connection.cursor()
-
-        # Add Book (hardcoded data)
-        cursor.execute(
-            "INSERT INTO Book (ISBN, Title, Description, Format, DigitalLink, DigitalVersion, BorrowLink, IsAvailableForBorrow) VALUES (%s, %s, '', %s, null, null, '', 1)",
-            (isbn, title, format),
-        )
-
-        # Check if the author exists, if not, add it
-        cursor.execute("SELECT * FROM Author WHERE Name = %s", (author,))
-        author_data = cursor.fetchone()
-
-        if not author_data:
-            cursor.execute("INSERT INTO Author (Name) VALUES (%s)", (author,))
-            connection.commit()
-            author_id = cursor.lastrowid
-        else:
-            author_id = author_data[0]
-
-        # Check if the genre exists, if not, add it
-        cursor.execute("SELECT * FROM Genre WHERE Name = %s", (genres,))
-        genre_data = cursor.fetchone()
-
-        if not genre_data:
-            cursor.execute("INSERT INTO Genre (Name) VALUES (%s)", (genres,))
-            connection.commit()
-            genre_id = cursor.lastrowid
-        else:
-            genre_id = genre_data[0]
-
-        # Add combination of BookISBN and GenreID
-        cursor.execute(
-            "INSERT INTO BookGenre (BookISBN, GenreID) VALUES (%s, %s)",
-            (isbn, genre_id),
-        )
-        connection.commit()
-
-        # Add combination of BookISBN and AuthorID
-        cursor.execute(
-            "INSERT INTO BookAuthor (BookISBN, AuthorID) VALUES (%s, %s)",
-            (isbn, author_id),
-        )
-        connection.commit()
-
-        return jsonify({"message": "Book successfully added"}), 200
-
-    except Exception as e:
-        connection.rollback()
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        cursor.close()
-        connection.close()
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    main()
