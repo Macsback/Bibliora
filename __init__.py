@@ -61,6 +61,8 @@ app.config["OAUTHLIB_INSECURE_TRANSPORT"] = False
 app.config["SESSION_PERMANENT"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=10)
 REDIRECT_URI = os.getenv("REDIRECT_URI")
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 SESSION_LIFETIME = timedelta(minutes=10)
 
 active_sessions = {}
@@ -96,32 +98,29 @@ def index():
 def login():
     if not google.authorized:
         return redirect(url_for("google.login"))
-
     return redirect(url_for("navigation"))
 
 
 @app.route("/callback")
 def callback():
-    if google.authorized:
-        user_info = google.get("/oauth2/v3/userinfo").json()
-        session["created"] = time.time()
-        if "id" in user_info:
-            session.permanent = True
-            session["google_id"] = user_info["id"]
-            session["email"] = user_info["email"]
-            session["name"] = user_info["name"]
-            return redirect(url_for("navigation"))
+    # Ensure the user is authorized
+    if not google.authorized:
+        return redirect(url_for("login"))
+
+    # Fetch user information
+    user_info = google.get("/oauth2/v3/userinfo")
+    if not user_info.ok:
+        flash("Failed to retrieve user info. Please try again.")
+        return redirect(url_for("login"))
+
+    user_info = user_info.json()
+    session.update(
+        google_id=user_info["sub"],
+        email=user_info["email"],
+        name=user_info["name"],
+        permanent=True,
+    )
     return redirect(url_for("navigation"))
-
-
-@app.route("/logout")
-def logout():
-    google_id = session.get("google_id")
-    if google_id in active_sessions:
-        del active_sessions[google_id]
-
-    session.clear()
-    return redirect("/")
 
 
 def login_is_required(function):
@@ -137,45 +136,39 @@ def login_is_required(function):
 @app.route("/navigation")
 @login_is_required
 def navigation():
+    # Ensure the user is logged in
     user_google_id = session.get("google_id")
+    if not user_google_id:
+        return redirect(url_for("login"))
+
+    # Check admin status
     is_admin = user_google_id in admin_google_ids
 
-    # Extract user info after authentication
-    resp = google.get("/oauth2/v2/userinfo")
-    if resp.ok:
-        user_info = resp.json()
-        user_id = user_info["id"]
-        name = user_info["name"]
-        email = user_info["email"]
-
-        # Create session
-        session["google_id"] = user_id
-        session["name"] = name
-        session["email"] = email
-        session.permanent = True
-
-        expires_at = datetime.now() + SESSION_LIFETIME
-        start_at = datetime.now().strftime("%H:%M")
-        expire_time = expires_at.strftime("%H:%M")
-
-        # Add to active sessions
-        active_sessions[user_id] = {
-            "google_id": user_id,
-            "name": name,
-            "email": email,
-            "created_at": start_at,
-            "expires_at": expire_time,
-        }
+    # Retrieve session info
+    created_at = session.get("created_at", datetime.now().strftime("%H:%M"))
+    expires_at = session.get(
+        "expires_at", (datetime.now() + SESSION_LIFETIME).strftime("%H:%M")
+    )
 
     return render_template(
         "navigation.html",
         is_admin=is_admin,
         user_id=user_google_id,
-        name=name,
-        email=email,
-        created_at=start_at,
-        expires_at=expire_time,
+        name=session.get("name"),
+        email=session.get("email"),
+        created_at=created_at,
+        expires_at=expires_at,
     )
+
+
+@app.route("/logout")
+def logout():
+    google_id = session.get("google_id")
+    if google_id in active_sessions:
+        del active_sessions[google_id]
+
+    session.clear()
+    return redirect("/")
 
 
 def admin_required(f):
