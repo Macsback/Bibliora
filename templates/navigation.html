@@ -22,6 +22,19 @@
             <li><a href="{{ url_for('admin_page') }}" class="button">Admin Page</a></li>
             {% endif %}
         </ul>
+        <p>
+            {% if user_id %}
+            Your Google ID: {{ user_id }}
+            {% if is_admin %}
+            (You are an Admin)
+            {% else %}
+            (You are not an Admin)
+            {% endif %}
+            {% else %}
+            User ID not found.
+            {% endif %}
+        </p>
+
         <p id="session-timer">Session expires in: <span id="time-left">10m</span></p>
         <button onclick=handleLogout() class="button">Logout</button>
     </div>
