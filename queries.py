@@ -1,3 +1,6 @@
+import datetime
+
+
 def get_all_users(cursor):
     query = "SELECT * FROM users"
     cursor.execute(query)
@@ -7,7 +10,8 @@ def get_all_users(cursor):
 def get_user_by_id(cursor, user_id):
     query = "SELECT * FROM users WHERE user_id = %s"
     cursor.execute(query, (user_id,))
-    return cursor.fetchone()
+    result = cursor.fetchone()
+    return result
 
 
 def get_books_by_user(cursor, user_id):
@@ -78,14 +82,10 @@ def get_all_bookclubs(cursor):
     return cursor.fetchall()
 
 
-def get_user_by_google_id(google_user_id):
-    return f"""
-        SELECT * FROM users WHERE google_user_id = '{google_user_id}'
-        """
-
-
-def create_user(google_user_id):
-    return f"""
-        INSERT INTO users (user_id, email, name, created_at, updated_at)
-        VALUES (%s, %s, %s, %s, %s)
-        """
+def insert_new_user(cursor, user_id, username, email, profile_picture=None):
+    query = """
+    INSERT INTO users (user_id, username, email, profile_picture, created_at)
+    VALUES (%s, %s, %s, %s, %s)
+    """
+    created_at = datetime.datetime.now()
+    cursor.execute(query, (user_id, username, email, profile_picture, created_at))

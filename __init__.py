@@ -15,7 +15,7 @@ from queries import (
     get_all_books,
     get_bookclubs_by_user,
     get_all_bookclubs,
-    get_user_by_google_id,
+    insert_new_user,
 )
 
 # Flask and CORS
@@ -40,10 +40,10 @@ from pubnub_service import init_pubnub, publish_message
 # Google Login
 import pathlib
 from google.oauth2 import id_token
-from google_auth_oauthlib.flow import Flow
+from google.auth.transport.requests import Request
 import google.auth.transport.requests
-import cachecontrol
 import secrets
+from flask import Response
 from datetime import datetime, timedelta
 from flask_dance.contrib.google import make_google_blueprint, google
 
@@ -91,12 +91,55 @@ def index():
     return render_template("login.html")
 
 
+@app.after_request
+def add_coop_header(response: Response):
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+    response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
+    return response
+
+
+@app.route("/google_login", methods=["POST"])
+def google_login():
+    data = request.json
+
+    user_id = data.get("google_id")
+    email = data.get("email")
+    username = data.get("displayName")
+    photo_url = data.get("photoUrl")
+
+    if not user_id or not email:
+        return jsonify({"error": "Invalid data"}), 400
+
+    connection = get_db_connection()
+    if connection is None:
+        return jsonify({"error": "Failed to connect to the database"}), 500
+
+    cursor = connection.cursor(dictionary=True)
+
+    user = get_user_by_id(cursor, user_id)
+
+    if user:
+        return (
+            jsonify({"message": "User exists", "user_id": user_id}),
+            200,
+        )
+    else:
+        insert_new_user(cursor, user_id, username, email, photo_url)
+        connection.commit()
+        return (
+            jsonify({"message": "User created", "user_id": user_id}),
+            201,
+        )
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if not google.authorized:
-        return redirect(
-            url_for("google.login", _external=True, prompt="select_account")
-        )
+        return redirect(url_for("google.login"))
     return redirect(url_for("navigation"))
 
 
@@ -135,6 +178,7 @@ def login_is_required(function):
 def navigation():
     user_google_id = session.get("google_id")
     is_admin = user_google_id in admin_google_ids
+
     # Extract user info after authentication
     resp = google.get("/oauth2/v2/userinfo")
     if resp.ok:
