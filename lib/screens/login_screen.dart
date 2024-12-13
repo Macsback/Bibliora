@@ -4,51 +4,61 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  LoginScreenState createState() => LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+class LoginScreenState extends State<LoginScreen> {
+  final GoogleSignIn googleSignIn = GoogleSignIn(
+    clientId:
+        "83146556166-6j2evtmvjfe8m27sq3i0as50s3sq3ng8.apps.googleusercontent.com",
+    scopes: ['email', 'openid', 'profile'],
+  );
 
-  Future<void> _googleLogin() async {
+  Future<void> _signInWithGoogle() async {
     try {
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser != null) {
-        final GoogleSignInAuthentication googleAuth =
-            await googleUser.authentication;
-        final idToken = googleAuth.idToken;
+      final GoogleSignInAccount? account = await googleSignIn.signIn();
 
-        if (idToken != null) {
-          // Send the ID token to your backend for verification and login
-          final response = await http.post(
-            Uri.parse('https://bibliorabackend.online/google-login'),
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({'id_token': idToken}),
-          );
+      if (account != null) {
+        // Prepare the account data to send to the backend
+        final accountData = {
+          'google_id': account.id,
+          'email': account.email,
+          'displayName': account.displayName,
+          'photoUrl': account.photoUrl,
+        };
 
-          if (response.statusCode == 200) {
-            // Login successful
-            print('Login successful');
-            // Navigate to home screen or dashboard
-          } else {
-            // Handle error
-            print('Error: ${response.body}');
-          }
+        // Send the account data to the backend
+        final response = await http.post(
+          Uri.parse('https:/bibliorabackend.online/google_login'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(accountData),
+        );
+
+        if (response.statusCode == 200) {
+          print('Login successful: ${response.body}');
+        } else if (response.statusCode == 201) {
+          print("User created: ${response.body}");
+        } else {
+          print('Login failed: ${response.body}');
         }
+      } else {
+        print("User canceled or sign-in failed.");
       }
     } catch (error) {
-      print("Google login error: $error");
+      print("Error during Google Sign-In: $error");
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Login")),
+      appBar: AppBar(title: Text('Google Login')),
       body: Center(
         child: ElevatedButton(
-          onPressed: _googleLogin,
+          onPressed: _signInWithGoogle,
           child: Text("Login with Google"),
         ),
       ),

@@ -1,5 +1,5 @@
 import 'package:bibliora/constants/colors.dart';
-import 'package:bibliora/screens/home.dart';
+import 'package:bibliora/screens/home_screen.dart';
 import 'package:bibliora/sections/recommendation_section.dart';
 import 'package:bibliora/service/api_service.dart';
 import 'package:flutter/material.dart';

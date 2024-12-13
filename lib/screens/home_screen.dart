@@ -3,7 +3,6 @@ import 'package:bibliora/main.dart';
 import 'package:bibliora/screens/books_screen.dart';
 import 'package:bibliora/screens/locate_book_screen.dart';
 import 'package:bibliora/screens/login_screen.dart';
-import 'package:bibliora/screens/profile_screen.dart';
 import '../sections/footer_section.dart';
 import '../sections/recommendation_section.dart';
 import '../sections/banner_section.dart';

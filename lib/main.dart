@@ -2,13 +2,14 @@ import 'package:bibliora/service/config_manager.dart';
 import 'package:bibliora/service/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
-import 'screens/home.dart';
+import 'screens/home_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ConfigManager.loadConfig();
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => UserProvider(),
