@@ -47,6 +47,7 @@ from flask_jwt_extended import (
     jwt_required,
     create_access_token,
     get_jwt_identity,
+    set_access_cookies,
 )
 
 
@@ -57,7 +58,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
 app.config["JWT_SECRET_KEY"] = os.getenv("APP_SECRET_KEY")
 jwt = JWTManager(app)
-CORS(app)
+CORS(app,supports_credentials=True)
 
 
 # Configure Flask app to use Google OAuth
@@ -68,9 +69,11 @@ SESSION_LIFETIME = timedelta(minutes=10)
 active_sessions = {}
 admin_google_ids = os.getenv("ADMIN_GOOGLE_ID")
 
-app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+app.config['JWT_TOKEN_LOCATION'] = ['cookies', 'headers']
 app.config["JWT_COOKIE_SECURE"] = True 
 app.config["JWT_ACCESS_COOKIE_NAME"] = "jwt_token"
+app.config["JWT_COOKIE_CSRF_PROTECT"] = True
+
 
 google_bp = make_google_blueprint(
     client_id=os.getenv("GOOGLE_CLIENT_ID"),
@@ -109,15 +112,15 @@ def admin_required(f):
     return decorated_function
 
 
-# Frontend for Google Login
-@app.route("/frontend_login", methods=["POST"])
+# Frontend Google Login
+app.route("/frontend_login", methods=["POST"])
 def frontend_login():
     data = request.json
 
     user_id = data.get("google_id")
     email = data.get("email")
     username = data.get("displayName")
-    photo_url = data.get("photoUrl")
+    profile_picture = data.get("profile_picture")
 
     if not user_id or not email:
         return jsonify({"error": "Invalid data"}), 400
@@ -129,26 +132,19 @@ def frontend_login():
     cursor = connection.cursor(dictionary=True)
 
     user = get_user_by_id(cursor, user_id)
-    jwt_token = create_access_token(identity=user_id)
 
+    access_token = create_access_token(identity=username)
     if user:
-        return jsonify(
-            {
-                "message":"User can log in",
-                "jwt_token": jwt_token,
-            },200
-        )
+        response = jsonify({"message": "User can log in"})
+        set_access_cookies(response, access_token) 
+        return response, 200
     else:
-        insert_new_user(cursor, user_id, username, email, photo_url)
+        insert_new_user(cursor, user_id, username, email, profile_picture)
         connection.commit()
-        return jsonify(
-            {
-                "message":"User was created",
-                "jwt_token": jwt_token,
-            },201
-        )
 
-
+        response = jsonify({"message": "User was created"})
+        response.set_cookie('jwt_token', access_token, httponly=True, secure=True, samesite='Strict')
+        return response, 201
 # Backend Login
 @app.route("/login", methods=["GET"])
 def login():
@@ -311,13 +307,12 @@ def beep(repeat):
 if is_raspberry_pi():
     GPIO.cleanup()
 
-
 @app.route("/users", methods=["GET"])
 @app.route("/users/<string:user_id>", methods=["GET"])
-@jwt_required()
+#@jwt_required()
 def get_user(user_id=None):
-    jwt_token = get_jwt_identity()
-    if user_id is not None:
+    jwt_token = session.get("jwt_token")
+    if user_id is None:
         if not session.get("google_id") in admin_google_ids:
             return jsonify({"error": "Admin access required"}), 403
     connection = get_db_connection()
@@ -336,12 +331,16 @@ def get_user(user_id=None):
 
 @app.route("/books", methods=["GET"])
 @app.route("/user_books/<string:user_id>", methods=["GET"])
-@jwt_required()
+#@jwt_required()
 def get_books(user_id=None):
     jwt_token = session.get("jwt_token")
-    if user_id is not None:
-        if not session.get("google_id") in admin_google_ids:
-            return jsonify({"error": "Admin access required"}), 403
+    google_id_in_session = session.get("google_id")
+    if google_id_in_session:
+        if google_id_in_session not in admin_google_ids:
+            # Regular users can only access their own data
+            if user_id and user_id != google_id_in_session:
+                return jsonify({"error": "You can only access your own data"}), 403
+        
     connection = get_db_connection()
     if connection is None:
         return jsonify({"error": "Database connection failed"}), 500
@@ -382,11 +381,14 @@ def fetch_image():
 
 @app.route("/bookclubs", methods=["GET"])
 @app.route("/user_bookclubs/<string:user_id>", methods=["GET"])
-@jwt_required()
+#@jwt_required()
 def get_bookclubs(user_id=None):
-    if user_id is not None:
-        if not session.get("google_id") in admin_google_ids:
-            return jsonify({"error": "Admin access required"}), 403
+    google_id_in_session = session.get("google_id")
+    if google_id_in_session:
+        if google_id_in_session not in admin_google_ids:
+            # Regular users can only access their own data
+            if user_id and user_id != google_id_in_session:
+                return jsonify({"error": "You can only access your own data"}), 403
 
     connection = get_db_connection()
     if connection is None:
@@ -431,7 +433,7 @@ def get_bookclubs(user_id=None):
 
 
 @app.route("/add_user_book/<string:user_id>", methods=["POST"])
-@jwt_required()
+#@jwt_required()
 def add_user_book(user_id=None):
     data = request.get_json()
 
