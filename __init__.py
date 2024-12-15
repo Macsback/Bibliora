@@ -4,7 +4,6 @@ import requests
 from dotenv import load_dotenv
 
 # Database and queries
-import mysql.connector
 from mysql.connector import Error
 from db import get_db_connection
 from queries import (
@@ -38,12 +37,7 @@ from functools import wraps
 from pubnub_service import init_pubnub, publish_message
 
 # Google Login
-import pathlib
-from google.oauth2 import id_token
-from google.auth.transport.requests import Request
 import google.auth.transport.requests
-import secrets
-from flask import Response
 from datetime import datetime, timedelta
 from flask_dance.contrib.google import make_google_blueprint, google
 
@@ -140,22 +134,18 @@ def frontend_login():
     if user:
         return jsonify(
             {
-                "google_id": user_id,
-                "username": username,
-                "email": email,
+                "message":"User can log in",
                 "jwt_token": jwt_token,
-            }
+            },200
         )
     else:
         insert_new_user(cursor, user_id, username, email, photo_url)
         connection.commit()
         return jsonify(
             {
-                "google_id": user_id,
-                "username": username,
-                "email": email,
+                "message":"User was created",
                 "jwt_token": jwt_token,
-            }
+            },201
         )
 
 
@@ -323,7 +313,7 @@ if is_raspberry_pi():
 
 
 @app.route("/users", methods=["GET"])
-@app.route("/users/<int:user_id>", methods=["GET"])
+@app.route("/users/<string:user_id>", methods=["GET"])
 @jwt_required()
 def get_user(user_id=None):
     jwt_token = get_jwt_identity()
@@ -345,7 +335,7 @@ def get_user(user_id=None):
 
 
 @app.route("/books", methods=["GET"])
-@app.route("/user_books/<int:user_id>", methods=["GET"])
+@app.route("/user_books/<string:user_id>", methods=["GET"])
 @jwt_required()
 def get_books(user_id=None):
     jwt_token = session.get("jwt_token")
@@ -391,7 +381,7 @@ def fetch_image():
 
 
 @app.route("/bookclubs", methods=["GET"])
-@app.route("/user_bookclubs/<int:user_id>", methods=["GET"])
+@app.route("/user_bookclubs/<string:user_id>", methods=["GET"])
 @jwt_required()
 def get_bookclubs(user_id=None):
     if user_id is not None:
@@ -440,7 +430,7 @@ def get_bookclubs(user_id=None):
         connection.close()
 
 
-@app.route("/add_user_book/<int:user_id>", methods=["POST"])
+@app.route("/add_user_book/<string:user_id>", methods=["POST"])
 @jwt_required()
 def add_user_book(user_id=None):
     data = request.get_json()
