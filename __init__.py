@@ -148,6 +148,8 @@ def frontend_login():
         response = jsonify({"message": "User was created"})
         response.set_cookie('jwt_token', access_token, httponly=True, secure=True, samesite='Strict')
         return response, 201
+
+
 # Backend Login
 @app.route("/login", methods=["GET"])
 def login():
@@ -322,7 +324,7 @@ def cleanup(exception=None):
 
 @app.route("/users", methods=["GET"])
 @app.route("/users/<string:user_id>", methods=["GET"])
-#@jwt_required()
+@jwt_required()
 def get_user(user_id=None):
     jwt_token = session.get("jwt_token")
     if user_id is None:
@@ -344,7 +346,7 @@ def get_user(user_id=None):
 
 @app.route("/books", methods=["GET"])
 @app.route("/user_books/<string:user_id>", methods=["GET"])
-#@jwt_required()
+@jwt_required()
 def get_books(user_id=None):
     jwt_token = session.get("jwt_token")
     google_id_in_session = session.get("google_id")
@@ -394,7 +396,7 @@ def fetch_image():
 
 @app.route("/bookclubs", methods=["GET"])
 @app.route("/user_bookclubs/<string:user_id>", methods=["GET"])
-#@jwt_required()
+@jwt_required()
 def get_bookclubs(user_id=None):
     google_id_in_session = session.get("google_id")
     if google_id_in_session:
@@ -446,7 +448,7 @@ def get_bookclubs(user_id=None):
 
 
 @app.route("/add_user_book/<string:user_id>", methods=["POST"])
-#@jwt_required()
+@jwt_required()
 def add_user_book(user_id=None):
     data = request.get_json()
 
@@ -514,7 +516,6 @@ def remove_book_from_user(user_id,title):
     finally:
         cursor.close()
         connection.close()
-
 
 
 def main():
