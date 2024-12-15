@@ -1,6 +1,5 @@
 import os
 import time
-import uuid
 import requests
 from dotenv import load_dotenv
 
@@ -28,7 +27,8 @@ from flask import (
     redirect,
     abort,
     url_for,
-    session,
+    session, 
+    make_response,
 )
 from flask_cors import CORS
 from io import BytesIO
@@ -47,12 +47,22 @@ from flask import Response
 from datetime import datetime, timedelta
 from flask_dance.contrib.google import make_google_blueprint, google
 
+# JWT
+from flask_jwt_extended import (
+    JWTManager,
+    jwt_required,
+    create_access_token,
+    get_jwt_identity,
+)
+
 
 load_dotenv()
 
 # App
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET_KEY")
+app.config["JWT_SECRET_KEY"] = os.getenv("APP_SECRET_KEY")
+jwt = JWTManager(app)
 CORS(app)
 
 
@@ -63,6 +73,10 @@ SESSION_LIFETIME = timedelta(minutes=10)
 
 active_sessions = {}
 admin_google_ids = os.getenv("ADMIN_GOOGLE_ID")
+
+app.config["JWT_TOKEN_LOCATION"] = ["cookies"]
+app.config["JWT_COOKIE_SECURE"] = True 
+app.config["JWT_ACCESS_COOKIE_NAME"] = "jwt_token"
 
 google_bp = make_google_blueprint(
     client_id=os.getenv("GOOGLE_CLIENT_ID"),
@@ -91,15 +105,19 @@ def index():
     return render_template("login.html")
 
 
-@app.after_request
-def add_coop_header(response: Response):
-    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
-    response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
-    return response
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("google_id") not in admin_google_ids:
+            abort(403)
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
-@app.route("/google_login", methods=["POST"])
-def google_login():
+# Frontend for Google Login
+@app.route("/frontend_login", methods=["POST"])
+def frontend_login():
     data = request.json
 
     user_id = data.get("google_id")
@@ -117,26 +135,32 @@ def google_login():
     cursor = connection.cursor(dictionary=True)
 
     user = get_user_by_id(cursor, user_id)
+    jwt_token = create_access_token(identity=user_id)
 
     if user:
-        return (
-            jsonify({"message": "User exists", "user_id": user_id}),
-            200,
+        return jsonify(
+            {
+                "google_id": user_id,
+                "username": username,
+                "email": email,
+                "jwt_token": jwt_token,
+            }
         )
     else:
         insert_new_user(cursor, user_id, username, email, photo_url)
         connection.commit()
-        return (
-            jsonify({"message": "User created", "user_id": user_id}),
-            201,
+        return jsonify(
+            {
+                "google_id": user_id,
+                "username": username,
+                "email": email,
+                "jwt_token": jwt_token,
+            }
         )
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
-
-
-@app.route("/login", methods=["GET", "POST"])
+# Backend Login
+@app.route("/login", methods=["GET"])
 def login():
     if not google.authorized:
         return redirect(url_for("google.login"))
@@ -145,94 +169,56 @@ def login():
 
 @app.route("/callback")
 def callback():
-    # Ensure the user is authorized
     if not google.authorized:
         return redirect(url_for("login"))
 
-    # Fetch user information
     user_info = google.get("/oauth2/v3/userinfo")
     if not user_info.ok:
         return redirect(url_for("login"))
 
     user_info = user_info.json()
+
     session.update(
         google_id=user_info["sub"],
         email=user_info["email"],
         name=user_info["name"],
     )
-    return redirect(url_for("navigation"))
 
+    jwt_token = create_access_token(identity=user_info["sub"])
 
-def login_is_required(function):
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        if "google_id" not in session:
-            return redirect(url_for("login"))
-        return function(*args, **kwargs)
+    response = make_response(redirect(url_for("navigation")))
+    response.set_cookie(
+        "jwt_token",
+        jwt_token,
+        httponly=True,
+        secure=True,   
+        samesite="Strict"  
+    )
 
-    return wrapper
+    return response  
 
 
 @app.route("/navigation")
-@login_is_required
 def navigation():
     user_google_id = session.get("google_id")
+
+    if not user_google_id:
+        return redirect(url_for("login"))
+
     is_admin = user_google_id in admin_google_ids
 
-    # Extract user info after authentication
-    resp = google.get("/oauth2/v2/userinfo")
-    if resp.ok:
-        user_info = resp.json()
-        user_id = user_info["id"]
-        name = user_info["name"]
-        email = user_info["email"]
-
-        # Create session
-        session["google_id"] = user_id
-        session["name"] = name
-        session["email"] = email
-
-        expires_at = datetime.now() + SESSION_LIFETIME
-        start_at = datetime.now().strftime("%H:%M")
-        expire_time = expires_at.strftime("%H:%M")
-
-        # Add to active sessions
-        active_sessions[user_id] = {
-            "google_id": user_id,
-            "name": name,
-            "email": email,
-            "created_at": start_at,
-            "expires_at": expire_time,
-        }
-
+    name = session.get("name")
+    email = session.get("email")
+    jwt_token = session.get("jwt_token") 
+    
     return render_template(
         "navigation.html",
         is_admin=is_admin,
         user_id=user_google_id,
         name=name,
         email=email,
-        created_at=start_at,
-        expires_at=expire_time,
+        jwt_token=jwt_token,
     )
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    google_id = session.get("google_id")
-    if google_id in active_sessions:
-        del active_sessions[google_id]
-    return redirect("/")
-
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get("google_id") not in admin_google_ids:
-            abort(403)
-        return f(*args, **kwargs)
-
-    return decorated_function
 
 
 @app.route("/admin")
@@ -244,7 +230,31 @@ def admin_page():
     if google_id not in admin_google_ids:
         return "Access Denied: You do not have admin privileges.", 403
 
+    name = session.get("name")
+    email = session.get("email")
+
+    expires_at = datetime.now() + SESSION_LIFETIME
+    start_at = datetime.now().strftime("%H:%M")
+    expire_time = expires_at.strftime("%H:%M")
+
+    active_sessions[google_id] = {
+        "google_id": google_id,
+        "name": name,
+        "email": email,
+        "created_at": start_at,
+        "expires_at": expire_time,
+    }
+
     return render_template("admin.html", active_sessions=active_sessions)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    google_id = session.get("google_id")
+    if google_id in active_sessions:
+        del active_sessions[google_id]
+    return redirect("/")
 
 
 # Function to check if running on a Raspberry Pi
@@ -268,7 +278,6 @@ if is_raspberry_pi():
 
 
 @app.route("/trigger", methods=["POST"])
-@login_is_required
 def trigger_method():
     try:
         # Check if running on a Raspberry Pi
@@ -315,8 +324,9 @@ if is_raspberry_pi():
 
 @app.route("/users", methods=["GET"])
 @app.route("/users/<int:user_id>", methods=["GET"])
-@login_is_required
+@jwt_required()
 def get_user(user_id=None):
+    jwt_token = get_jwt_identity()
     if user_id is not None:
         if not session.get("google_id") in admin_google_ids:
             return jsonify({"error": "Admin access required"}), 403
@@ -336,8 +346,9 @@ def get_user(user_id=None):
 
 @app.route("/books", methods=["GET"])
 @app.route("/user_books/<int:user_id>", methods=["GET"])
-@login_is_required
+@jwt_required()
 def get_books(user_id=None):
+    jwt_token = session.get("jwt_token")
     if user_id is not None:
         if not session.get("google_id") in admin_google_ids:
             return jsonify({"error": "Admin access required"}), 403
@@ -363,7 +374,6 @@ def get_books(user_id=None):
 
 
 @app.route("/fetch-image", methods=["POST"])
-@login_is_required
 def fetch_image():
     data = request.get_json()
     cover_image_url = data.get("coverImageUrl")
@@ -382,7 +392,7 @@ def fetch_image():
 
 @app.route("/bookclubs", methods=["GET"])
 @app.route("/user_bookclubs/<int:user_id>", methods=["GET"])
-@login_is_required
+@jwt_required()
 def get_bookclubs(user_id=None):
     if user_id is not None:
         if not session.get("google_id") in admin_google_ids:
@@ -430,8 +440,8 @@ def get_bookclubs(user_id=None):
         connection.close()
 
 
-@app.route("/add_user_book/<int:user_id>", methods=["POST"], endpoint="add_user_book")
-@login_is_required
+@app.route("/add_user_book/<int:user_id>", methods=["POST"])
+@jwt_required()
 def add_user_book(user_id=None):
     data = request.get_json()
 
@@ -459,8 +469,7 @@ def add_user_book(user_id=None):
         connection.close()
 
 
-@app.route("/add_book", methods=["POST"], endpoint="add_book_request")
-@login_is_required
+@app.route("/add_book", methods=["POST"])
 def add_book_request():
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"}), 400
@@ -471,10 +480,22 @@ def add_book_request():
         return jsonify(response), 500
     return jsonify(response), 200
 
+def export_book_request_to_file(book_request, filename="book_request.txt"):
+    try:
+        with open(filename, "w") as file:
+            file.write("Book Request Details\n")
+            file.write("====================\n")
+            for key, value in book_request.items():
+                file.write(f"{key.capitalize()}: {value}\n")
+            file.write("\nThank you for your request!")
+        print(f"Book request exported to {filename}")
+    except Exception as e:
+        print(f"Error exporting book request: {e}")
+
 
 def main():
     connection = get_db_connection()
 
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True, host="0.0.0.0", port=5000)

@@ -1,67 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Navigation</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
 
-<body>
+  <body>
     <div class="index-container">
-        <h1>Welcome to Bibliora!</h1>
-        <p>Select a route:</p>
-        <ul class="navigation-list">
-            <li><a href="{{ url_for('get_user') }}" class="button">Get Users</a></li>
-            <li><a href="{{ url_for('get_books') }}" class="button">Get Books</a></li>
-            <li><a href="{{ url_for('get_bookclubs') }}" class="button">Get Book Clubs</a></li>
-            <li><a href="{{ url_for('get_books', user_id=user_id) }}" class="button">User's Books</a></li>
-            <li><a href="{{ url_for('get_bookclubs', user_id=user_id) }}" class="button">User's Book Clubs</a></li>
-            {% if is_admin %}
-            <li><a href="{{ url_for('admin_page') }}" class="button">Admin Page</a></li>
-            {% endif %}
-        </ul>
-        {#
-        <p>
-            {% if user_id %}
-            Your Google ID: {{ user_id }}
-            {% if is_admin %}
-            (You are an Admin)
-            {% else %}
-            (You are not an Admin)
-            {% endif %}
-            {% else %}
-            User ID not found.
-            {% endif %}
-        </p>
-        #}
-        <p id="session-timer">Session expires in: <span id="time-left">10m</span></p>
-        <button onclick=handleLogout() class="button">Logout</button>
+      <h1>Welcome to Bibliora!</h1>
+      <p>Select a route:</p>
+      <ul class="navigation-list">
+        <li>
+          <a
+            href="{{ url_for('get_user') }}"
+            class="button"
+            data-url="{{ url_for('get_user') }}"
+            >Get Users</a
+          >
+        </li>
+        <li>
+          <a
+            href="{{ url_for('get_books') }}"
+            class="button"
+            data-url="{{ url_for('get_books') }}"
+            >Get Books</a
+          >
+        </li>
+        <li>
+          <a
+            href="{{ url_for('get_bookclubs') }}"
+            class="button"
+            data-url="{{ url_for('get_bookclubs') }}"
+            >Get Book Clubs</a
+          >
+        </li>
+        <li>
+          <a
+            href="{{ url_for('get_books', user_id=user_id) }}"
+            class="button"
+            data-url="{{ url_for('get_books', user_id=user_id) }}"
+            >User's Books</a
+          >
+        </li>
+        <li>
+          <a
+            href="{{ url_for('get_bookclubs', user_id=user_id) }}"
+            class="button"
+            data-url="{{ url_for('get_bookclubs', user_id=user_id) }}"
+            >User's Book Clubs</a
+          >
+        </li>
+        {% if is_admin %}
+        <li>
+          <a href="{{ url_for('admin_page') }}" class="button">Admin Page</a>
+        </li>
+        {% endif %}
+      </ul>
+
+      <p id="session-timer">
+        Session expires in: <span id="time-left">10m</span>
+      </p>
+      <button onclick="handleLogout()" class="button">Logout</button>
     </div>
 
     <script>
-        function handleLogout() {
-            window.location.href = "{{ url_for('logout') }}";
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+      }
+
+      function getJwtToken() {
+        let jwtToken = localStorage.getItem("jwt_token");
+
+        if (!jwtToken) {
+          jwtToken = getCookie("jwt_token");
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            let timeLeft = 600
-            const timerElement = document.getElementById("time-left");
+        return jwtToken;
+      }
 
-            function updateTimer() {
-                if (timeLeft <= 0) {
-                    window.location.href = "/logout";
-                } else {
-                    const minutes = Math.floor(timeLeft / 60);
-                    const seconds = timeLeft % 60;
-                    timerElement.textContent = `${minutes}m ${seconds}s`;
-                    timeLeft--;
-                }
-            }
-            setInterval(updateTimer, 1000);
+      localStorage.setItem("jwt_token", "{{ jwt_token }}");
+
+      document.querySelectorAll(".navigation-list a").forEach((link) => {
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+
+          if (link.getAttribute("href") === "{{ url_for('admin_page') }}") {
+            window.location.href = link.getAttribute("href");
+            return;
+          }
+
+          const jwtToken = getJwtToken();
+
+          if (!jwtToken) {
+            alert("You must be logged in to view this data.");
+            return;
+          }
+
+          fetch(link.getAttribute("href"), {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${jwtToken}`,
+            },
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              console.log("Data:", data);
+              window.location.href = link.getAttribute("href");
+            })
+            .catch((error) => {
+              console.error("Error fetching data:", error);
+              alert("Failed to fetch data.");
+            });
         });
-    </script>
-</body>
+      });
 
+      function handleLogout() {
+        window.location.href = "{{ url_for('logout') }}";
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        let timeLeft = 600;
+        const timerElement = document.getElementById("time-left");
+
+        function updateTimer() {
+          if (timeLeft <= 0) {
+            window.location.href = "/logout";
+          } else {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerElement.textContent = `${minutes}m ${seconds}s`;
+            timeLeft--;
+          }
+        }
+        setInterval(updateTimer, 1000);
+      });
+    </script>
+  </body>
 </html>
