@@ -2,9 +2,8 @@ import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/main.dart';
 import 'package:bibliora/screens/books_screen.dart';
 import 'package:bibliora/screens/locate_book_screen.dart';
+import 'package:bibliora/screens/reading_list_screen.dart';
 import 'package:bibliora/service/api_service.dart';
-import 'package:bibliora/service/user_provider.dart';
-import 'package:provider/provider.dart';
 import '../sections/footer_section.dart';
 import '../sections/recommendation_section.dart';
 import '../sections/banner_section.dart';
@@ -71,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   navLink('Home', HomeScreen()),
                   navLink('Books', BooksScreen()),
-                  navLink('Reading Lists', ReadingListSection()),
+                  navLink('Reading Lists', ReadingListScreen()),
                   navLink('Arrivals', BooksScreen()),
                   navLink('Reviews', ReviewsSection()),
                   navLink('Book Clubs', BookClubsSection()),
@@ -105,7 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: white,
                       onPressed: () {
                         ApiService apiService = ApiService();
-
                         apiService.showLoginDialog(context);
                       }),
                 ],

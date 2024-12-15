@@ -109,6 +109,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+              ReadingListSection(),
+              UserBookClubsSection()
             ],
           ),
         ),

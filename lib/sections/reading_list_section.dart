@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/models/book.dart';
-import 'package:bibliora/models/book_grid_view.dart';
 import 'package:bibliora/models/book_image.dart';
 import 'package:bibliora/screens/add_user_book_screen.dart';
 import 'package:bibliora/service/user_provider.dart';
@@ -25,11 +24,10 @@ class ReadingListSectionState extends State<ReadingListSection> {
   List<double> bookRatings = [];
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final userProvider = Provider.of<UserProvider>(context);
-    String? userId = userProvider.userID.toString();
-    loadUserBooks(userId);
+  void initState() {
+    super.initState();
+    final userId = Provider.of<UserProvider>(context, listen: false).userID;
+    loadUserBooks(userId.toString());
   }
 
   Future<void> loadUserBooks(String userId) async {
@@ -50,7 +48,8 @@ class ReadingListSectionState extends State<ReadingListSection> {
   }
 
   void refreshReadingList() {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
     String? userId = userProvider.userID.toString();
     setState(() {
       booksLoaded = false;

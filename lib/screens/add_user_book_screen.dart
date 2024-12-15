@@ -114,8 +114,7 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
           selectedTitle != null &&
           selectedAuthor != null &&
           selectedGenre != null) {
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-
+        final userProvider = Provider.of<UserProvider>(context);
         String? userId = userProvider.userID.toString();
 
         await ApiService().addUserBook(

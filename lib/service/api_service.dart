@@ -305,4 +305,26 @@ class ApiService {
       },
     );
   }
+
+  static Future<void> removeBookFromUser(String userId, String title) async {
+    final url = Uri.parse('$backendUrl/users/$userId/books/$title');
+    try {
+      final response = await https.delete(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        print('Book with title: $title removed successfully');
+      } else {
+        print('Failed to remove book: ${response.body}');
+        throw Exception('Failed to remove book');
+      }
+    } catch (e) {
+      print('Error removing book: $e');
+      throw Exception('Error removing book');
+    }
+  }
 }

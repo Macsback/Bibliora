@@ -1,5 +1,5 @@
-import 'package:bibliora/constants/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/models/book.dart';
 import 'package:bibliora/models/book_image.dart';
 
@@ -7,12 +7,14 @@ class BooksGridView extends StatelessWidget {
   final List<Book> books;
   final List<double> bookRatings;
   final int itemCount;
+  final Function(Book)? removeBook;
 
   const BooksGridView({
     super.key,
     required this.books,
     required this.bookRatings,
     required this.itemCount,
+    this.removeBook,
   });
 
   @override
@@ -51,53 +53,57 @@ class BooksGridView extends StatelessWidget {
                   ),
                 ),
                 padding: EdgeInsets.all(20),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      BookImage(coverImageUrl: book.coverImageUrl ?? ''),
-                      SizedBox(height: 10),
-                      Text(
-                        book.title ?? 'Unknown Title',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.white,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    BookImage(coverImageUrl: book.coverImageUrl ?? ''),
+                    SizedBox(height: 10),
+                    Text(
+                      book.title ?? 'Unknown Title',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.white,
                       ),
-                      SizedBox(height: 5),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 5),
+                    Text(
+                      book.author ?? 'Unknown Author',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: 5),
+                    for (var genre in (book.genres ?? []).take(3))
                       Text(
-                        book.author ?? 'Unknown Author',
+                        genre,
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 14,
+                          color: Colors.white,
                         ),
+                        textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
                       ),
-                      SizedBox(height: 5),
-                      for (var genre in (book.genres ?? []).take(3))
-                        Text(
-                          genre,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white,
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: generateStars(rating),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: generateStars(rating),
+                    ),
+                    SizedBox(height: 10),
+                    if (removeBook != null)
+                      IconButton(
+                        onPressed: () => removeBook!(book),
+                        icon: Icon(Icons.remove_circle, color: Colors.red),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
               );
             },
@@ -107,7 +113,6 @@ class BooksGridView extends StatelessWidget {
     );
   }
 
-  // Generates Stars for rating
   List<Widget> generateStars(double rating) {
     int fullStars = rating.floor();
     double fractionalPart = rating - fullStars;
@@ -115,11 +120,12 @@ class BooksGridView extends StatelessWidget {
     List<Widget> stars = [];
     for (int i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.add(Icon(Icons.star, color: yellowAccent, size: 20));
-      } else if (i == fullStars && fractionalPart >= 0.5) {
-        stars.add(Icon(Icons.star_half, color: yellowAccent, size: 20));
+        stars.add(Icon(Icons.star, color: Colors.yellow, size: 16));
+      } else if (i < fullStars + 1 && fractionalPart > 0) {
+        stars.add(Icon(Icons.star_half, color: Colors.yellow, size: 16));
+        fractionalPart = 0;
       } else {
-        stars.add(Icon(Icons.star_border, color: yellowAccent, size: 20));
+        stars.add(Icon(Icons.star_border, color: Colors.yellow, size: 16));
       }
     }
     return stars;
