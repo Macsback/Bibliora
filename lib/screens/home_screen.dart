@@ -1,5 +1,6 @@
 import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/main.dart';
+import 'package:bibliora/screens/arrivals_screen.dart';
 import 'package:bibliora/screens/books_screen.dart';
 import 'package:bibliora/screens/locate_book_screen.dart';
 import 'package:bibliora/screens/reading_list_screen.dart';
@@ -71,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   navLink('Home', HomeScreen()),
                   navLink('Books', BooksScreen()),
                   navLink('Reading Lists', ReadingListScreen()),
-                  navLink('Arrivals', BooksScreen()),
+                  navLink('Arrivals', ArrivalsScreen()),
                   navLink('Reviews', ReviewsSection()),
                   navLink('Book Clubs', BookClubsSection()),
                 ],

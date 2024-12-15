@@ -38,17 +38,17 @@ class BooksGridView extends StatelessWidget {
             builder: (context, raints) {
               return Container(
                 decoration: BoxDecoration(
-                  color: Color(0xFF1F2020),
+                  color: backgroundColor,
                   borderRadius: BorderRadius.all(Radius.circular(12)),
                   boxShadow: [
                     BoxShadow(
-                      color: Color(0x80089DA1),
+                      color: boxShadowColor,
                       blurRadius: 2,
                       spreadRadius: 3,
                     ),
                   ],
                   border: Border.all(
-                    color: Color(0x80089DA1),
+                    color: boxShadowColor,
                     width: 2,
                   ),
                 ),
@@ -63,7 +63,7 @@ class BooksGridView extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        color: Colors.white,
+                        color: white,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -73,7 +73,7 @@ class BooksGridView extends StatelessWidget {
                     Text(
                       book.author ?? 'Unknown Author',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: white,
                         fontSize: 14,
                       ),
                       maxLines: 2,
@@ -86,7 +86,7 @@ class BooksGridView extends StatelessWidget {
                         genre,
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.white,
+                          color: white,
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 2,
@@ -101,7 +101,7 @@ class BooksGridView extends StatelessWidget {
                     if (removeBook != null)
                       IconButton(
                         onPressed: () => removeBook!(book),
-                        icon: Icon(Icons.remove_circle, color: Colors.red),
+                        icon: Icon(Icons.remove_circle, color: red),
                       ),
                   ],
                 ),

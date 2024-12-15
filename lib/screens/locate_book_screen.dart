@@ -30,12 +30,9 @@ class LocateBookScreenState extends State<LocateBookScreen> {
   late PubNub pubnub;
   late Subscription subscription;
 
-  // Fetch books from Backend
   @override
   void initState() {
     super.initState();
-    String userId = Provider.of<UserProvider>(context).userID.toString();
-    fetchUserBooks(userId);
 
     // Initialize PubNub
     pubnub = PubNub(
@@ -61,6 +58,14 @@ class LocateBookScreenState extends State<LocateBookScreen> {
         this.message = newMessage;
       });
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    String userId =
+        Provider.of<UserProvider>(context, listen: false).userID.toString();
+    fetchUserBooks(userId);
   }
 
   // Function to fetch books
