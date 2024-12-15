@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 # Database and queries
 from mysql.connector import Error
 from db import get_db_connection
+import helpers
 from queries import (
     get_all_users,
     get_user_by_id,
@@ -14,6 +15,7 @@ from queries import (
     get_bookclubs_by_user,
     get_all_bookclubs,
     insert_new_user,
+    get_isbn_by_title
 )
 
 # Flask and CORS
@@ -478,22 +480,41 @@ def add_book_request():
         return jsonify({"error": "Request must be JSON"}), 400
 
     data = request.get_json()
-    response = export_book_request_to_file(data)
+    response = helpers.export_book_request_to_file(data)
     if "error" in response:
         return jsonify(response), 500
     return jsonify(response), 200
 
-def export_book_request_to_file(book_request, filename="book_request.txt"):
+
+
+@app.route("/users/<string:user_id>/books/<string:title>", methods=["DELETE"])
+def remove_book_from_user(user_id,title):
+    connection = get_db_connection()
+    if connection is None:
+        return jsonify({"error": "Database connection failed"}), 500
+
+    cursor = connection.cursor()
+
     try:
-        with open(filename, "w") as file:
-            file.write("Book Request Details\n")
-            file.write("====================\n")
-            for key, value in book_request.items():
-                file.write(f"{key.capitalize()}: {value}\n")
-            file.write("\nThank you for your request!")
-        print(f"Book request exported to {filename}")
+        isbn = get_isbn_by_title(cursor, title)
+        if not isbn:
+            return jsonify({"error": f"No book found with title '{title}'"}), 404
+
+        delete_query = "DELETE FROM user_books WHERE user_id = %s AND book_isbn = %s;"
+        cursor.execute(delete_query, (user_id, isbn))
+        connection.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": "Book not found in user_books"}), 404
+        
+        return jsonify({"message": "Book successfully removed"}), 200
+
     except Exception as e:
-        print(f"Error exporting book request: {e}")
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    finally:
+        cursor.close()
+        connection.close()
+
 
 
 def main():

@@ -38,6 +38,15 @@ def get_books_by_user(cursor, user_id):
     cursor.execute(query, (user_id,))
     return cursor.fetchall()
 
+def get_isbn_by_title(cursor, title):
+    query = "SELECT isbn FROM books WHERE title = %s LIMIT 1;"
+    cursor.execute(query, (title,))
+    result = cursor.fetchone()
+    if result:
+        return result[0] 
+    return None
+
+
 
 def get_all_books(cursor):
     query = """
