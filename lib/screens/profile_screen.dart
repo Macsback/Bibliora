@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/sections/reading_list_section.dart';
 import 'package:bibliora/sections/user_bookclubs_section.dart';
 import 'package:bibliora/service/api_service.dart';
 import 'package:bibliora/service/user_provider.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 
@@ -17,24 +20,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String userName = 'Unknown Name';
   String userEmail = 'Unknown Email';
   String memberSince = 'Unknown Date';
+  String profilePicture = 'Unknown Picture';
 
+  ApiService apiService = ApiService();
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _fetchUser();
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _fetchUser();
+    });
   }
 
   Future<void> _fetchUser() async {
     try {
-      int userId = Provider.of<UserProvider>(context, listen: false).userID;
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      String? userId = userProvider.userID.toString();
+
+      print("userid: $userId");
+
       final user = await ApiService.fetchUserById(userId);
-      setState(() {
-        userName = user.username;
-        userEmail = user.email;
-        memberSince = user.memberSince;
+      print("User: $user");
+
+      final imageBytes =
+          await ApiService.fetchImageFromBackend(user.profilePicture);
+      String base64Image = imageBytes != null
+          ? base64Encode(imageBytes)
+          : 'assets/profile-picture.png';
+
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          userName = user.username;
+          userEmail = user.email;
+          memberSince = user.memberSince;
+          profilePicture = base64Image;
+        });
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
       print('Error loading user: $e');
+      print('StackTrace: $stackTrace');
     }
   }
 
@@ -68,8 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 75,
-                        backgroundImage:
-                            AssetImage('assets/profile-picture.png'),
+                        backgroundImage: NetworkImage(profilePicture),
                       ),
                       SizedBox(height: 16),
                       Text(
@@ -83,65 +105,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: TextStyle(fontSize: 16, color: white)),
                       Text('Member Since: $memberSince',
                           style: TextStyle(fontSize: 16, color: white)),
-                      SizedBox(height: 16),
-                      Text('Actions',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: white)),
-                      SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: buttonColor),
-                            child: Text('Edit Profile',
-                                style: TextStyle(color: white)),
-                          ),
-                          SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: buttonColor),
-                            child: Text('Change Password',
-                                style: TextStyle(color: white)),
-                          ),
-                          SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: buttonColor),
-                            child:
-                                Text('Logout', style: TextStyle(color: white)),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
-                ),
-              ),
-
-              // Reading List Section
-              Container(
-                  padding: EdgeInsets.all(16.0),
-                  margin: EdgeInsets.only(bottom: 16.0),
-                  child: ReadingListSection()),
-
-              // Book Clubs Section
-              Container(
-                  padding: EdgeInsets.all(16.0),
-                  margin: EdgeInsets.only(bottom: 16.0),
-                  child: UserBookClubsSection()),
-
-              // Footer Section
-              Container(
-                alignment: Alignment.center,
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  '© 2024 Bibliora | All Rights Reserved',
-                  style: TextStyle(color: white, fontSize: 14),
                 ),
               ),
             ],

@@ -2,7 +2,9 @@ import 'package:bibliora/constants/colors.dart';
 import 'package:bibliora/main.dart';
 import 'package:bibliora/screens/books_screen.dart';
 import 'package:bibliora/screens/locate_book_screen.dart';
-import 'package:bibliora/screens/login_screen.dart';
+import 'package:bibliora/service/api_service.dart';
+import 'package:bibliora/service/user_provider.dart';
+import 'package:provider/provider.dart';
 import '../sections/footer_section.dart';
 import '../sections/recommendation_section.dart';
 import '../sections/banner_section.dart';
@@ -99,13 +101,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SizedBox(width: 10),
                   IconButton(
-                    icon: Icon(Icons.person),
-                    color: white,
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginScreen()),
-                    ),
-                  ),
+                      icon: Icon(Icons.person),
+                      color: white,
+                      onPressed: () {
+                        ApiService apiService = ApiService();
+
+                        apiService.showLoginDialog(context);
+                      }),
                 ],
               ),
             ],

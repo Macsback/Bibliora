@@ -1,3 +1,4 @@
+import 'package:bibliora/screens/profile_screen.dart';
 import 'package:bibliora/service/config_manager.dart';
 import 'package:bibliora/service/user_provider.dart';
 import 'package:provider/provider.dart';
@@ -27,6 +28,9 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Bibliora',
+      routes: {
+        "/profile": (context) => ProfileScreen(),
+      },
       home: HomeScreen(),
     );
   }

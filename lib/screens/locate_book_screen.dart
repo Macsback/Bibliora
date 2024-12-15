@@ -34,7 +34,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
   @override
   void initState() {
     super.initState();
-    final userId = Provider.of<UserProvider>(context, listen: false).userID;
+    String userId = Provider.of<UserProvider>(context).userID.toString();
     fetchUserBooks(userId);
 
     // Initialize PubNub
@@ -64,7 +64,7 @@ class LocateBookScreenState extends State<LocateBookScreen> {
   }
 
   // Function to fetch books
-  Future<void> fetchUserBooks(int userId) async {
+  Future<void> fetchUserBooks(String userId) async {
     try {
       List<Book> fetchedBooks = await ApiService.fetchUserBooks(userId);
       setState(() {

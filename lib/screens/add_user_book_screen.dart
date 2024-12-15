@@ -114,7 +114,9 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
           selectedTitle != null &&
           selectedAuthor != null &&
           selectedGenre != null) {
-        int userId = Provider.of<UserProvider>(context, listen: false).userID;
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+        String? userId = userProvider.userID.toString();
 
         await ApiService().addUserBook(
           userId: userId,
@@ -146,8 +148,9 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to add book')),
+        const SnackBar(content: Text('Book was already added')),
       );
+      print(e);
     }
   }
 
@@ -223,11 +226,9 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
                             Book? selectedBook = books.firstWhereOrNull(
                               (book) => book.title == selectedTitle,
                             ); // Find the matching book
-                            if (selectedBook != null) {
-                              selectedISBN = selectedBook.isbn;
-                              selectedAuthor = selectedBook.author;
-                              selectedGenre = selectedBook.genres?.join(', ');
-                            }
+                            selectedISBN = selectedBook?.isbn;
+                            selectedAuthor = selectedBook?.author;
+                            selectedGenre = selectedBook?.genres?.join(', ');
                           });
                         },
                         hintText: 'Search Title...',
@@ -246,11 +247,9 @@ class AddUserBookScreenState extends State<AddUserBookScreen> {
                             Book? selectedBook = books.firstWhereOrNull(
                               (book) => book.isbn == selectedISBN,
                             ); // Find the matching book
-                            if (selectedBook != null) {
-                              selectedTitle = selectedBook.title;
-                              selectedAuthor = selectedBook.author;
-                              selectedGenre = selectedBook.genres?.join(', ');
-                            }
+                            selectedTitle = selectedBook?.title;
+                            selectedAuthor = selectedBook?.author;
+                            selectedGenre = selectedBook?.genres?.join(', ');
                           });
                         },
                         hintText: 'Search ISBN...',

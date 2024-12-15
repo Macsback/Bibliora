@@ -26,7 +26,7 @@ class RecommendationSectionState extends State<RecommendationSection> {
     try {
       List<Book> fetchedBooks = await ApiService.fetchBooks();
       setState(() {
-        books = fetchedBooks;
+        books = fetchedBooks.take(10).toList();
         bookRatings = List.generate(books.length, (_) {
           return Random().nextDouble() * 5;
         });
@@ -46,7 +46,7 @@ class RecommendationSectionState extends State<RecommendationSection> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: EdgeInsets.only(right: 30, left: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

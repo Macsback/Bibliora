@@ -22,10 +22,11 @@ class UserBookClubsSectionState extends State<UserBookClubsSection> {
 
   Future<void> loadUserBookClubs() async {
     try {
-      final userID = Provider.of<UserProvider>(context, listen: false).userID;
+      final userProvider = Provider.of<UserProvider>(context);
+      int? userId = userProvider.userID;
 
       List<BookClub> fetchedUserBookClubs =
-          await ApiService.fetchUserBookClubs(userID);
+          await ApiService.fetchUserBookClubs(userId.toString());
       setState(() {
         userBookClubs = fetchedUserBookClubs;
       });
