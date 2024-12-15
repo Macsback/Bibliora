@@ -90,8 +90,9 @@ app.register_blueprint(google_bp, url_prefix="/login")
 
 
 # Hardware
-LED_pin = 12
-Buzzer_pin = 11
+SENSOR_PIN = 23
+LED_pin = 18
+Buzzer_pin = 17
 
 # Initialize PubNub
 pubnub = init_pubnub()
@@ -243,10 +244,8 @@ def logout():
     return redirect("/")
 
 
-# Function to check if running on a Raspberry Pi
 def is_raspberry_pi():
     try:
-        # Check if running on Raspberry Pi by looking for the 'model' file
         with open("/sys/firmware/devicetree/base/model", "r") as f:
             model = f.read().lower()
             return "raspberry pi" in model
@@ -258,32 +257,53 @@ def is_raspberry_pi():
 if is_raspberry_pi():
     import RPi.GPIO as GPIO
 
-    GPIO.setmode(GPIO.BOARD)
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(SENSOR_PIN, GPIO.IN)
     GPIO.setup(LED_pin, GPIO.OUT)
     GPIO.setup(Buzzer_pin, GPIO.OUT)
+
+    GPIO.add_event_detect(SENSOR_PIN, GPIO.RISING, callback=lambda channel: pi_callback(channel))
+
+def beep(repeat):
+    if is_raspberry_pi():
+        for _ in range(repeat):
+            for _ in range(60):  
+                GPIO.output(Buzzer_pin, True)
+                time.sleep(0.001)
+                GPIO.output(Buzzer_pin, False)
+            time.sleep(0.5)  
+    else:
+        print("Beep simulated")
+
+
+# Callback for GPIO sensor pin
+def pi_callback(channel):
+    if is_raspberry_pi():
+        GPIO.output(LED_pin, True)
+        time.sleep(0.5)
+        GPIO.output(LED_pin, False)
+        beep(6)
+    else:
+        print('Movement detected!')
 
 
 @app.route("/trigger", methods=["POST"])
 def trigger_method():
     try:
-        # Check if running on a Raspberry Pi
-        if is_raspberry_pi():
+        is_rpi = is_raspberry_pi()
+
+        if is_rpi:
             GPIO.output(LED_pin, True)
             time.sleep(0.5)
             GPIO.output(LED_pin, False)
 
-            beep(6)
+            pi_callback(SENSOR_PIN)
 
         response = {
             "message": "Success",
-            "status": (
-                "LED and Buzzer Triggered!"
-                if is_raspberry_pi()
-                else "Simulation LED and Buzzer Triggered!"
-            ),
+            "status": "LED and Buzzer Triggered!" if is_rpi else "Simulation LED and Buzzer Triggered!",
         }
 
-        # Use PubNub to publish the message
         publish_message(pubnub, "PUBNUB_CHANNEL_NAME", response)
 
         return jsonify(response)
@@ -292,20 +312,11 @@ def trigger_method():
         return jsonify(message=f"Error: {str(e)}")
 
 
-def beep(repeat):
-    if is_raspberry_pi():
-        for i in range(repeat):
-            GPIO.output(Buzzer_pin, True)
-            time.sleep(0.001)
-            GPIO.output(Buzzer_pin, False)
-    else:
-        # Simulate beep in non-Raspberry Pi environments
-        print("Beep simulated")
-
-
 # Clean up GPIO if running on a Raspberry Pi
-if is_raspberry_pi():
-    GPIO.cleanup()
+@app.teardown_appcontext
+def cleanup(exception=None):
+    if is_raspberry_pi():
+        GPIO.cleanup()
 
 @app.route("/users", methods=["GET"])
 @app.route("/users/<string:user_id>", methods=["GET"])
